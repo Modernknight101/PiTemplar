@@ -172,3 +172,57 @@ If it does → you’re done ✅
 ✅ Restart enabled if script crashes
 
 
+Now that the screen works, let's do web GUI next!
+
+Here’s a step-by-step guide for your web GUI.
+
+1️⃣ Create a systemd service file
+
+Run:
+
+sudo nano /etc/systemd/system/web_gui.service
+
+
+Paste this:
+
+[Unit]
+Description=Raspberry Pi E-Paper Web GUI
+After=network.target
+
+[Service]
+Type=simple
+User=templar
+WorkingDirectory=/home/templar/e-Paper/RaspberryPi_JetsonNano/python
+ExecStart=/usr/bin/python3 web_gui.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+
+
+Important:
+
+Replace User=templar with your username if different.
+
+Make sure WorkingDirectory points to the folder where web_gui.py lives.
+
+Make sure the path to Python matches your system (which python3 → usually /usr/bin/python3).
+
+2️⃣ Reload systemd to recognize the new service
+sudo systemctl daemon-reload
+
+3️⃣ Enable it to start at boot
+sudo systemctl enable web_gui.service
+
+4️⃣ Start the service now
+sudo systemctl start web_gui.service
+
+5️⃣ Check status
+sudo systemctl status web_gui.service
+
+
+You should see something like:
+
+Active: active (running) since ...
+
