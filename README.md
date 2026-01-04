@@ -230,4 +230,72 @@ You should see something like:
 
 Active: active (running) since ...
 
-Once all is verified and 
+Once all is verified and good to go, let's do SAMBA to make it work as a true NAS
+
+sudo apt update
+sudo apt install -y samba samba-common-bin
+
+once that install is done, do the smbclient
+
+sudo apt update
+sudo apt install -y smbclient
+
+Verify: 
+
+smbd --version
+
+
+create the share
+
+mkdir /srv/templar/shares/private
+chmod 770 /srv/templar/shares/private
+
+sudo cp /etc/samba/smb.conf /etc/samba/smb.conf.bak  (maybe pull it to your drive via ftp)
+
+Edit Samba config
+sudo nano /etc/samba/smb.conf
+
+Replace everything below [global] with this:
+[global]
+   workgroup = WORKGROUP
+   server string = PiTemplar NAS
+   netbios name = PITEMPLAR
+   security = user
+   map to guest = Bad User
+   dns proxy = no
+   log file = /var/log/samba/log.%m
+   max log size = 1000
+
+[private]
+   path = /srv/templar/shares/private
+   browseable = yes
+   writable = yes
+   guest ok = no
+   read only = no
+   valid users = templar
+
+Save and exit
+
+Create Samba user
+
+Even though templar exists, Samba needs its own password.
+
+sudo smbpasswd -a templar
+sudo smbpasswd -e templar
+
+Restart and enable Samba
+sudo systemctl restart smbd
+sudo systemctl enable smbd
+
+systemctl status smbd
+
+Test from another device
+Windows
+\\templar\private
+
+macOS / Linux
+smb://templar/private
+
+
+
+
