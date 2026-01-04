@@ -176,6 +176,8 @@ If it does → you’re done ✅
 
 Now that the screen works, let's do web GUI next!
 
+upload all files to the same python folder. once you've done that, start the below steps.
+
 Here’s a step-by-step guide for your web GUI.
 
 1️⃣ Create a systemd service file
@@ -228,3 +230,4 @@ You should see something like:
 
 Active: active (running) since ...
 
+Once all is verified and 
