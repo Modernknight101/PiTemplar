@@ -80,7 +80,7 @@ crontab -e
 
 Add:
 
-reboot python3 /home/bjorn/e-Paper/RaspberryPi_JetsonNano/python/mem_display.py 
+reboot python3 /home/templar/e-Paper/RaspberryPi_JetsonNano/python/mem_display.py 
 
 ⚠️ Important e-Paper Notes
 
@@ -89,3 +89,86 @@ Do NOT refresh too fast (≤30s is good)
 Frequent refreshes shorten panel life
 
 Waveshare e-paper is slow by design — that’s normal
+
+sudo apt update 
+
+sudo apt install -y python3-psutil
+
+ Make sure the script is executable (recommended)
+
+chmod +x /home/templar/e-Paper/RaspberryPi_JetsonNano/python/mem_display.py
+
+Create a systemd service file
+
+sudo nano /etc/systemd/system/epaper-status.service
+
+Paste exactly this (adjust nothing unless noted):
+
+[Unit]
+Description=Waveshare ePaper System Status
+After=multi-user.target
+
+[Service]
+Type=simple
+User=templar
+WorkingDirectory=/home/templar/e-Paper/RaspberryPi_JetsonNano/python
+ExecStart=/usr/bin/python3 /home/templar/e-Paper/RaspberryPi_JetsonNano/python/mem_display.py
+Restart=always
+RestartSec=10
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target
+
+
+Save:
+
+CTRL+O → ENTER
+CTRL+X
+
+Reload systemd and enable the service
+sudo systemctl daemon-reexec
+sudo systemctl daemon-reload
+sudo systemctl enable epaper-status.service
+
+Start it now (no reboot needed)
+sudo systemctl start epaper-status.service
+
+Within ~30 seconds, your e-paper should update.
+
+Check status (VERY useful)
+systemctl status epaper-status.service
+
+
+You should see:
+
+Active: active (running)
+
+No red error messages
+
+To see logs:
+
+journalctl -u epaper-status.service -f
+
+🔁 Reboot test (important)
+sudo reboot
+
+After boot:
+
+Wait ~30–60 seconds
+
+Screen should refresh automatically
+
+If it does → you’re done ✅
+
+🧠 Common Gotchas (you’re already safe)
+
+✅ Uses full path to python3
+
+✅ Runs as user templar (SPI access OK)
+
+✅ Working directory set (imports work)
+
+✅ Restart enabled if script crashes
+
+
