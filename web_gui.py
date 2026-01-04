@@ -16,7 +16,7 @@ app = Flask(__name__)
 BASE_DIR = Path(__file__).resolve().parent
 AUTH_FILE = BASE_DIR / "auth.json"
 CONTROL_FILE = BASE_DIR / "control.json"
-TEMPLAR_ROOT = Path("/home/bjorn/TEMPLAR").resolve()
+PITEMPLAR_ROOT = Path("/home/templar/PITEMPLAR").resolve()
 
 SESSION_TIMEOUT = 300
 ACTIVE_USERS = {}
@@ -26,7 +26,7 @@ ACTIVE_USERS = {}
 # ---------------------
 def load_auth():
     if not AUTH_FILE.exists():
-        save_auth({"username": "admin", "password": "templar"})
+        save_auth({"username": "templar", "password": "templar"})
     with open(AUTH_FILE) as f:
         return json.load(f)
 
@@ -42,7 +42,7 @@ def authenticate():
     return Response(
         "Authentication required",
         401,
-        {"WWW-Authenticate": 'Basic realm="TEMPLAR Login"'}
+        {"WWW-Authenticate": 'Basic realm="PITEMPLAR Login"'}
     )
 
 def track_user(auth):
@@ -89,7 +89,7 @@ def write_control(data):
 # ---------------------
 DASHBOARD_HTML = """
 <!doctype html>
-<title>TEMPLAR Control</title>
+<title>PITEMPLAR Control</title>
 <style>
 body { font-family: sans-serif; background:#111; color:#eee; padding:20px }
 .card { background:#222; padding:15px; border-radius:8px; max-width:420px }
@@ -113,7 +113,7 @@ a { color:#7fc7ff; text-decoration:none }
   <button onclick="post('/api/refresh')">Refresh Screen</button>
 
   <hr>
-  <h3>Upload to TEMPLAR</h3>
+  <h3>Upload to PITEMPLAR</h3>
   <input type="file" id="fileInput">
   <button onclick="startUpload()">Upload</button>
   <p id="status"></p>
@@ -133,7 +133,7 @@ a { color:#7fc7ff; text-decoration:none }
   <p id="netstatus"></p>
 
   <hr>
-  <a href="/browse"><button>Browse TEMPLAR</button></a>
+  <a href="/browse"><button>Browse PITEMPLAR</button></a>
 </div>
 
 <script>
@@ -314,7 +314,7 @@ def switch_network():
 # FILE MANAGER MODULE
 # ---------------------
 from file_manager import register_file_manager
-register_file_manager(app, requires_auth, TEMPLAR_ROOT)
+register_file_manager(app, requires_auth, PITEMPLAR_ROOT)
 
 # ---------------------
 # MAIN

@@ -6,6 +6,8 @@ PiTemplar is a local cloud NAS operated via Web GUI that is interactive. It offe
 
 Installation begins simply by downloading RaspberryPiImager, you want to use a Pi OS Lite for command line only. That's all you'll need.
 
+For this specific project, I named everything templar. so username templar, password templar, device name templar.
+
 I configured this device using a Waveshare e-paper screen.
 
 Waveshare e-paper uses SPI.
