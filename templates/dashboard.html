@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PiTemplar Control</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+body {
+    font-family: system-ui, sans-serif;
+    background:
+        linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.75)),
+        url("/static/castle.png") no-repeat center center fixed;
+    background-size: cover;
+    color: #eee;
+    padding: 20px;
+}
+
+.status-knight-container {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.card {
+    background: rgba(20,20,20,0.9);
+    padding: 22px;
+    border-radius: 10px;
+    max-width: 520px;
+    box-shadow: 0 0 18px rgba(0,0,0,0.7);
+}
+
+h2, h3 {
+    font-family: 'Cinzel', serif;
+    color: #f0e6c8;
+    margin-top: 0;
+    text-shadow: 1px 1px 2px #000;
+}
+
+.stat-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Cinzel', serif;
+}
+
+.icon { font-size: 20px; }
+
+.gauge {
+    background: #333;
+    border-radius: 14px;
+    overflow: hidden;
+    margin: 6px 0 14px;
+}
+
+.gauge-inner {
+    height: 30px;
+    line-height: 30px;
+    padding-right: 10px;
+    text-align: right;
+    font-weight: bold;
+    color: #fff;
+    border-radius: 14px;
+    transition: width 0.6s ease-in-out;
+}
+
+button {
+    width: 100%;
+    margin-top: 8px;
+    padding: 10px;
+    font-size: 14px;
+    background: #333;
+    color: #eee;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+button:hover { background:#444; }
+
+input {
+    width: 100%;
+    margin-top: 6px;
+    padding: 8px;
+    border-radius: 6px;
+    border: none;
+}
+
+.knight-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 0;
+}
+
+.speech-bubble {
+    background: #222;
+    color: #eee;
+    padding: 12px 16px;
+    border-radius: 12px;
+    position: relative;
+    max-width: 280px;
+    font-family: 'Cinzel', serif;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    margin-bottom: 4px;
+}
+
+.speech-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -12px;
+    left: 20px;
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 12px solid #222;
+}
+
+.knight-img {
+    width: 120px;
+    height: auto;
+    border-radius: 8px;
+}
+
+.controls-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 20px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- SYSTEM STATUS + KNIGHT -->
+<div class="status-knight-container">
+    <div class="card">
+        <h2>Thy system, my liege</h2>
+        <p><b>IP:</b> {{ ip }}</p>
+
+        <div class="stat-label"><span class="icon">⚔️</span>Thy CPU <span id="cpuLabel">{{ cpu }}%</span></div>
+        <div class="gauge"><div id="cpuGauge" class="gauge-inner" style="width:{{ cpu }}%;background:#c0392b">{{ cpu }}%</div></div>
+
+        <div class="stat-label"><span class="icon">🛡️</span>Thy Treasure <span id="diskLabel">{{ disk.used_percent }}%</span></div>
+        <div class="gauge"><div id="diskGauge" class="gauge-inner" style="width:{{ disk.used_percent }}%;background:#e67e22">{{ disk.used_percent }}%</div></div>
+
+        <div class="stat-label"><span class="icon">📜</span>Thy Memory <span id="ramLabel">{{ ram }}%</span></div>
+        <div class="gauge"><div id="ramGauge" class="gauge-inner" style="width:{{ ram }}%;background:#8e44ad">{{ ram }}%</div></div>
+
+        <div class="stat-label"><span class="icon">👥</span>Sires <span id="usersLabel">{{ users }}</span></div>
+        <div class="gauge"><div id="usersGauge" class="gauge-inner" style="width:{{ users }}%;background:#27ae60">{{ users }}</div></div>
+    </div>
+
+    <div class="knight-container">
+        <div class="speech-bubble">
+            Sire, I shall keep your Data safe at <b>\\templar\private</b>. Access in thy file explorer!
+        </div>
+        <img src="/static/knight.png" class="knight-img">
+    </div>
+</div>
+
+<!-- CONTROLS -->
+<div class="controls-section">
+    <div class="card">
+        <h3>Your will, Sire.</h3>
+        <button onclick="post('/api/rotate')">Rotate Screen 180°</button>
+        <button onclick="post('/api/invert')">Invert Screen</button>
+        <button onclick="post('/api/refresh')">Refresh Screen</button>
+    </div>
+
+    <div class="card">
+        <h3>Change thy secret phrase</h3>
+        <input type="password" id="oldpw" placeholder="Current password">
+        <input type="password" id="newpw" placeholder="New password">
+        <button onclick="changePassword()">Change Password</button>
+        <p id="pwstatus"></p>
+    </div>
+
+    <div class="card">
+        <h3>Conquer a new castle</h3>
+        <input type="text" id="ssid" placeholder="SSID">
+        <input type="password" id="netpw" placeholder="Password">
+        <button onclick="switchNetwork()">Connect</button>
+        <p id="netstatus"></p>
+    </div>
+</div>
+
+<script>
+function post(url) { fetch(url, { method: "POST" }); }
+
+async function changePassword() {
+    const resp = await fetch("/api/change_password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            old: oldpw.value,
+            new: newpw.value
+        })
+    });
+    pwstatus.textContent = resp.ok ? "Password updated" : "Password change failed";
+}
+
+async function switchNetwork() {
+    const resp = await fetch("/api/switch_network", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            ssid: ssid.value,
+            password: netpw.value
+        })
+    });
+    const data = await resp.json();
+    netstatus.textContent = data.ok ? data.message : data.error;
+}
+
+async function updateGauges() {
+    try {
+        const r = await fetch("/api/stats");
+        const d = await r.json();
+
+        cpuGauge.style.width = d.cpu + "%";
+        cpuGauge.textContent = d.cpu + "%";
+        cpuLabel.textContent = d.cpu + "%";
+
+        diskGauge.style.width = d.disk.used_percent + "%";
+        diskGauge.textContent = d.disk.used_percent + "%";
+        diskLabel.textContent = d.disk.used_percent + "%";
+
+        ramGauge.style.width = d.ram + "%";
+        ramGauge.textContent = d.ram + "%";
+        ramLabel.textContent = d.ram + "%";
+
+        usersGauge.style.width = d.users + "%";
+        usersGauge.textContent = d.users;
+        usersLabel.textContent = d.users;
+    } catch(e) {}
+
+    setTimeout(updateGauges, 5000);
+}
+updateGauges();
+</script>
+
+</body>
+</html>
