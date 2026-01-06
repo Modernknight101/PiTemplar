@@ -1,5 +1,6 @@
 import sys
 import os
+import threading
 sys.path.append(os.path.join(os.path.dirname(__file__), 'lib'))
 
 import time
@@ -61,6 +62,24 @@ def read_control():
 def write_control(data):
     with open(CONTROL_FILE, "w") as f:
         json.dump(data, f)
+
+# ---------------- DELAYED BOOT FLIP ----------------
+def delayed_flip():
+    time.sleep(7)  # wait 7 seconds after boot
+    print("Flipping screen 180° after 10 seconds")
+
+    try:
+        with open(CONTROL_FILE, "r") as f:
+            control = json.load(f)
+    except:
+        control = {"flip": False, "invert": False, "refresh": False}
+
+    control["flip"] = True  # trigger flip
+    with open(CONTROL_FILE, "w") as f:
+        json.dump(control, f)
+
+# Start delayed flip thread
+threading.Thread(target=delayed_flip, daemon=True).start()
 
 # ---------------- INIT DISPLAY ----------------
 epd = epd2in13_V4.EPD()
@@ -126,12 +145,7 @@ while True:
         draw.text((80, 35), "Sire! Log in", font=font, fill=0)
         draw.text((80, 45), "web browser", font=font, fill=0)
         draw.text((80, 55), "IP:8080", font=font, fill=0)
-        
-        
-        
-        
-        
-        
+
         if graphic:
             x = epd.height - graphic.width - 5
             image.paste(graphic, (x, 5))
