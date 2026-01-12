@@ -19,13 +19,13 @@ UPDATE_INTERVAL = 300          # 5 minutes
 CONTROL_FILE = "control.json"
 STATE_FILE = "state.json"
 
-GRAPHIC_1 = "pik1.png"
-GRAPHIC_2 = "pik2.png"
+GRAPHIC_PREFIX = "pik"
+GRAPHIC_COUNT = 10             # pik0.png .. pik9.png
 
 # ---------------- STATE ----------------
 ROTATED = False
 INVERTED = False
-GRAPHIC_TOGGLE = False   # False = pik1, True = pik2
+GRAPHIC_INDEX = 8              # starts at pik8.png
 
 # ---------------- FUNCTIONS ----------------
 def get_ip(ifname='wlan0'):
@@ -89,11 +89,16 @@ epd.Clear(0xFF)
 
 font = ImageFont.load_default()
 
-# ---------------- LOAD GRAPHICS (SAFE) ----------------
-graphic1 = Image.open(GRAPHIC_1).convert('1') if os.path.exists(GRAPHIC_1) else None
-graphic2 = Image.open(GRAPHIC_2).convert('1') if os.path.exists(GRAPHIC_2) else None
+# ---------------- LOAD GRAPHICS ----------------
+graphics = []
+for i in range(GRAPHIC_COUNT):
+    filename = f"{GRAPHIC_PREFIX}{i}.png"
+    if os.path.exists(filename):
+        graphics.append(Image.open(filename).convert("1"))
+    else:
+        graphics.append(None)
 
-print("mem_display.py started")
+print("mem_display.py started (pik0–pik9 cycle, 5 min)")
 
 # ---------------- MAIN LOOP ----------------
 last_update = 0
@@ -127,8 +132,8 @@ while True:
     if force_update or (now - last_update) >= UPDATE_INTERVAL:
         last_update = now
 
-        # 🔒 TOGGLE GRAPHIC ONLY WHEN WE WERE ALREADY REDRAWING
-        GRAPHIC_TOGGLE = not GRAPHIC_TOGGLE
+        # Advance graphic index safely
+        GRAPHIC_INDEX = (GRAPHIC_INDEX + 1) % GRAPHIC_COUNT
 
         used_percent, total_gb, free_gb = get_disk_usage(DISK_PATH)
         ip_addr = get_ip("wlan0")
@@ -136,19 +141,19 @@ while True:
 
         image = Image.new('1', (epd.height, epd.width), 255)
         draw = ImageDraw.Draw(image)
+        
 
-        draw.text((5, 5), "SYSTEM STATUS", font=font, fill=0)
-        draw.text((5, 25), f"Disk Used: {used_percent}%", font=font, fill=0)
-        draw.text((5, 40), f"Free: {free_gb:.1f} GB", font=font, fill=0)
-        draw.text((5, 55), f"Total: {total_gb:.1f} GB", font=font, fill=0)
-        draw.text((5, 70), f"IP: {ip_addr}", font=font, fill=0)
-        draw.text((5, 85), f"CPU: {cpu_temp}", font=font, fill=0)
-        draw.text((80, 35), "Sire! Log in", font=font, fill=0)
-        draw.text((80, 45), "web browser", font=font, fill=0)
-        draw.text((80, 55), "IP:8080", font=font, fill=0)
+        draw.text((5, 5), "Sire! Log in via thy browser!", font=font, fill=0)
+        draw.text((5, 20), "IP:8080", font=font, fill=0)
+        draw.text((5, 45), f"Disk Used: {used_percent}%", font=font, fill=0)
+        draw.text((5, 60), f"Free: {free_gb:.1f} GB", font=font, fill=0)
+        draw.text((5, 75), f"Total: {total_gb:.1f} GB", font=font, fill=0)
+        draw.text((5, 90), f"IP: {ip_addr}", font=font, fill=0)
+        draw.text((5, 105), f"CPU: {cpu_temp}", font=font, fill=0)
+        
 
-        current_graphic = graphic2 if GRAPHIC_TOGGLE else graphic1
 
+        current_graphic = graphics[GRAPHIC_INDEX]
         if current_graphic:
             x = epd.height - current_graphic.width - 5
             image.paste(current_graphic, (x, 5))
@@ -163,7 +168,11 @@ while True:
 
         with open(STATE_FILE, "w") as f:
             json.dump(
-                {"rotated": ROTATED, "inverted": INVERTED},
+                {
+                    "rotated": ROTATED,
+                    "inverted": INVERTED,
+                    "graphic": f"pik{GRAPHIC_INDEX}"
+                },
                 f
             )
 
