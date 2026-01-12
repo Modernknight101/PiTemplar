@@ -15,14 +15,17 @@ from waveshare_epd import epd2in13_V4
 
 # ---------------- CONFIG ----------------
 DISK_PATH = "/"
-UPDATE_INTERVAL = 900          # 15 minutes
-GRAPHIC_FILE = "pik1.png"
+UPDATE_INTERVAL = 300          # 5 minutes
 CONTROL_FILE = "control.json"
 STATE_FILE = "state.json"
+
+GRAPHIC_1 = "pik1.png"
+GRAPHIC_2 = "pik2.png"
 
 # ---------------- STATE ----------------
 ROTATED = False
 INVERTED = False
+GRAPHIC_TOGGLE = False   # False = pik1, True = pik2
 
 # ---------------- FUNCTIONS ----------------
 def get_ip(ifname='wlan0'):
@@ -65,8 +68,7 @@ def write_control(data):
 
 # ---------------- DELAYED BOOT FLIP ----------------
 def delayed_flip():
-    time.sleep(7)  # wait 7 seconds after boot
-    print("Flipping screen 180° after 10 seconds")
+    time.sleep(7)
 
     try:
         with open(CONTROL_FILE, "r") as f:
@@ -74,11 +76,10 @@ def delayed_flip():
     except:
         control = {"flip": False, "invert": False, "refresh": False}
 
-    control["flip"] = True  # trigger flip
+    control["flip"] = True
     with open(CONTROL_FILE, "w") as f:
         json.dump(control, f)
 
-# Start delayed flip thread
 threading.Thread(target=delayed_flip, daemon=True).start()
 
 # ---------------- INIT DISPLAY ----------------
@@ -88,11 +89,9 @@ epd.Clear(0xFF)
 
 font = ImageFont.load_default()
 
-# ---------------- LOAD GRAPHIC ----------------
-if os.path.exists(GRAPHIC_FILE):
-    graphic = Image.open(GRAPHIC_FILE).convert('1')
-else:
-    graphic = None
+# ---------------- LOAD GRAPHICS (SAFE) ----------------
+graphic1 = Image.open(GRAPHIC_1).convert('1') if os.path.exists(GRAPHIC_1) else None
+graphic2 = Image.open(GRAPHIC_2).convert('1') if os.path.exists(GRAPHIC_2) else None
 
 print("mem_display.py started")
 
@@ -128,11 +127,13 @@ while True:
     if force_update or (now - last_update) >= UPDATE_INTERVAL:
         last_update = now
 
+        # 🔒 TOGGLE GRAPHIC ONLY WHEN WE WERE ALREADY REDRAWING
+        GRAPHIC_TOGGLE = not GRAPHIC_TOGGLE
+
         used_percent, total_gb, free_gb = get_disk_usage(DISK_PATH)
         ip_addr = get_ip("wlan0")
         cpu_temp = get_cpu_temp()
 
-        # Create image
         image = Image.new('1', (epd.height, epd.width), 255)
         draw = ImageDraw.Draw(image)
 
@@ -146,9 +147,11 @@ while True:
         draw.text((80, 45), "web browser", font=font, fill=0)
         draw.text((80, 55), "IP:8080", font=font, fill=0)
 
-        if graphic:
-            x = epd.height - graphic.width - 5
-            image.paste(graphic, (x, 5))
+        current_graphic = graphic2 if GRAPHIC_TOGGLE else graphic1
+
+        if current_graphic:
+            x = epd.height - current_graphic.width - 5
+            image.paste(current_graphic, (x, 5))
 
         if ROTATED:
             image = image.rotate(180)
@@ -158,9 +161,10 @@ while True:
 
         epd.display(epd.getbuffer(image))
 
-        # Save actual screen state for GUI
-        state = {"rotated": ROTATED, "inverted": INVERTED}
         with open(STATE_FILE, "w") as f:
-            json.dump(state, f)
+            json.dump(
+                {"rotated": ROTATED, "inverted": INVERTED},
+                f
+            )
 
     time.sleep(1)
