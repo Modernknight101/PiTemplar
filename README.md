@@ -16,7 +16,7 @@ https://a.co/d/inzVWE7     Pisugar 3 battery, optional, but highly recommended. 
 
 Installation begins simply by downloading RaspberryPiImager, you want to use a Pi OS Lite for command line only. That's all you'll need.
 
-For this specific project, I named everything either PiTemplar or templar. so default username PiTemplar, default password pitemplar, device name PiTemplar. Feel free to make modifications but for initial setup purposes let's stick to this. Set up SSH as well with those credentials so you have an easy reference starting point and noo concerns over remembering credentials. 
+For this specific project, I named everything either PiTemplar or templar. so default username PiTemplar, default password pitemplar, device name PiTemplar. Feel free to make modifications but for initial setup purposes let's stick to this. Set up SSH as well with those credentials so you have an easy reference starting point and noo concerns over remembering credentials. The initial network can be either your home network, or setup a hotspot on your phone with SSID PiTemplar and password pitemplar initially then add your network on the web GUI once established. See the pattern here? Moving on...
 
 Once RaspberryPiOS Lite is installed (32 or 64 bit, doesn't really matter), Let's begin configuring the Pi to make components work. 
 
