@@ -19,7 +19,7 @@ ACTIVE_USERS = {}
 # ---------------------
 def load_auth():
     if not AUTH_FILE.exists():
-        save_auth({"username": "admin", "password": "templar"})
+        save_auth({"username": "PiTemplar", "password": "pitemplar"})
     with open(AUTH_FILE) as f:
         return json.load(f)
 
