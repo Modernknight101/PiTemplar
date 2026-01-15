@@ -22,6 +22,39 @@ STATE_FILE = "state.json"
 GRAPHIC_PREFIX = "pik"
 GRAPHIC_COUNT = 10             # pik0.png .. pik9.png
 
+# ---------------- PHRASES ----------------
+PHRASES = [
+    ("Sire! Log in via thy browser!",
+     "Thy IP and port 8080"),
+
+    ("Sire! Thy IP and THY port!",
+     "They shall show the way!"),
+
+    ("Sire! IP:8080 login My liege!",
+     "Command thy legion!"),
+
+    ("Sire, Thy share \\\\IP\\private",
+     "I shall keep thy data safe!"),
+
+    ("I am PiTemplar sire!",
+     "Data Bank is my sacred duty!"),
+
+    ("Guard thy bits, my liege!",
+     "The vault stands ready!"),
+
+    ("Thy server awakens!",
+     "8080 awaits thy command!"),
+
+    ("Sire! Network stands firm!",
+     "No packets shall falter!"),
+
+    ("I watch thy disks, sire!",
+     "Not a byte goes astray!"),
+
+    ("Rest easy, my liege!",
+     "PiTemplar stands watch!")
+]
+
 # ---------------- STATE ----------------
 ROTATED = False
 INVERTED = False
@@ -141,18 +174,20 @@ while True:
 
         image = Image.new('1', (epd.height, epd.width), 255)
         draw = ImageDraw.Draw(image)
-        
 
-        draw.text((5, 5), "Sire! Log in via thy browser!", font=font, fill=0)
-        draw.text((5, 20), "IP:8080", font=font, fill=0)
+        # --- Phrase text (synced with image) ---
+        line1, line2 = PHRASES[GRAPHIC_INDEX]
+        draw.text((5, 5), line1, font=font, fill=0)
+        draw.text((5, 20), line2, font=font, fill=0)
+
+        # --- System info ---
         draw.text((5, 45), f"Disk Used: {used_percent}%", font=font, fill=0)
         draw.text((5, 60), f"Free: {free_gb:.1f} GB", font=font, fill=0)
         draw.text((5, 75), f"Total: {total_gb:.1f} GB", font=font, fill=0)
         draw.text((5, 90), f"IP: {ip_addr}", font=font, fill=0)
         draw.text((5, 105), f"CPU: {cpu_temp}", font=font, fill=0)
-        
 
-
+        # --- Graphic ---
         current_graphic = graphics[GRAPHIC_INDEX]
         if current_graphic:
             x = epd.height - current_graphic.width - 5
