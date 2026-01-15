@@ -4,11 +4,21 @@
 
 PiTemplar is a local cloud NAS operated via Web GUI that is interactive. It offers storage on your Local Area network anytime, anywhere!
 
+First step is obviously the hardware. 
+
+https://a.co/d/fTyeqv4     Raspberry pi Zero 2W
+
+https://a.co/d/5Apdn16     Upgraded heatsink
+
+https://a.co/d/bW6hi50     Screen, makes it more fun
+
+https://a.co/d/inzVWE7     Pisugar 3 battery, optional, but highly recommended. Makes it a true mobile server.
+
 Installation begins simply by downloading RaspberryPiImager, you want to use a Pi OS Lite for command line only. That's all you'll need.
 
-For this specific project, I named everything templar. so username templar, password templar, device name templar.
+For this specific project, I named everything either PiTemplar or templar. so default username PiTemplar, default password pitemplar, device name PiTemplar. Feel free to make modifications but for initial setup purposes let's stick to this. Set up SSH as well with those credentials so you have an easy reference starting point and noo concerns over remembering credentials. 
 
-I configured this device using a Waveshare e-paper screen.
+Once RaspberryPiOS Lite is installed (32 or 64 bit, doesn't really matter), Let's begin configuring the Pi to make components work. 
 
 Waveshare e-paper uses SPI.
 
@@ -297,5 +307,13 @@ macOS / Linux
 smb://templar/private
 
 
+🎩 Thank You ♥
+💖 Support Me
+If you like my work and want to support me, plz consider
 
+https://www.paypal.me/Modernknight101
+
+or buy a copy or my sci-fi book, available on Amazon
+
+https://a.co/d/hx5OLOO Gods Among Us: Alienthology
 
