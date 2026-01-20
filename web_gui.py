@@ -19,7 +19,7 @@ ACTIVE_USERS = {}
 # ---------------------
 def load_auth():
     if not AUTH_FILE.exists():
-        save_auth({"username": "PiTemplar", "password": "pitemplar"})
+        save_auth({"username": "admin", "password": "templar"})
     with open(AUTH_FILE) as f:
         return json.load(f)
 
@@ -33,7 +33,7 @@ def check_auth(username, password):
 
 def authenticate():
     return Response("Authentication required", 401,
-        {"WWW-Authenticate": 'Basic realm="TEMPLAR Login"'})
+        {"WWW-Authenticate": 'Basic realm="PiTemplar Login"'})
 
 def track_user(auth):
     ACTIVE_USERS[f"{auth.username}@{request.remote_addr}"] = time.time()
@@ -172,17 +172,46 @@ def refresh():
 # ---------------------
 # Network
 # ---------------------
+@app.route("/api/scan_networks")
+@requires_auth
+def scan_networks():
+    """Scan Wi-Fi networks and return as JSON"""
+    try:
+        result = subprocess.run(
+            ["nmcli", "-t", "-f", "SSID,SECURITY,SIGNAL", "dev", "wifi"],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        networks = []
+        for line in result.stdout.strip().split("\n"):
+            if not line.strip():
+                continue
+            ssid, security, signal = line.split(":")
+            networks.append({
+                "ssid": ssid.strip(),
+                "secure": bool(security.strip()),
+                "signal": int(signal) if signal.isdigit() else 0
+            })
+        return jsonify(networks)
+    except subprocess.CalledProcessError:
+        return jsonify([])
+
 @app.route("/api/switch_network", methods=["POST"])
 @requires_auth
 def switch_network():
+    """Connect to Wi-Fi using selected or manual SSID"""
     data = request.json
+    ssid_clean = data.get("ssid", "").strip()
+    password = data.get("password", "").strip()
+    if not ssid_clean:
+        return jsonify(ok=False, error="SSID cannot be empty"), 400
     try:
         subprocess.run(
-            ["sudo", "nmcli", "dev", "wifi", "connect",
-             data["ssid"], "password", data["password"]],
+            ["sudo", "nmcli", "dev", "wifi", "connect", ssid_clean, "password", password],
             check=True
         )
-        return jsonify(ok=True, message="Network connected")
+        return jsonify(ok=True, message=f"Connected to {ssid_clean}")
     except subprocess.CalledProcessError as e:
         return jsonify(ok=False, error=str(e)), 500
 
