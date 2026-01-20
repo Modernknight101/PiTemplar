@@ -15,7 +15,7 @@ from waveshare_epd import epd2in13_V4
 
 # ---------------- CONFIG ----------------
 DISK_PATH = "/"
-UPDATE_INTERVAL = 300          # 5 minutes
+UPDATE_INTERVAL = 180          # 3 minutes
 CONTROL_FILE = "control.json"
 STATE_FILE = "state.json"
 
