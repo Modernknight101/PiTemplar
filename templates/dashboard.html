@@ -19,7 +19,6 @@ body {
 
 .status-knight-container {
     display: flex;
-    align-items: flex-start;
     gap: 10px;
     flex-wrap: wrap;
 }
@@ -35,8 +34,6 @@ body {
 h2, h3 {
     font-family: 'Cinzel', serif;
     color: #f0e6c8;
-    margin-top: 0;
-    text-shadow: 1px 1px 2px #000;
 }
 
 .stat-label {
@@ -45,8 +42,6 @@ h2, h3 {
     gap: 8px;
     font-family: 'Cinzel', serif;
 }
-
-.icon { font-size: 20px; }
 
 .gauge {
     background: #333;
@@ -63,66 +58,37 @@ h2, h3 {
     font-weight: bold;
     color: #fff;
     border-radius: 14px;
-    transition: width 0.6s ease-in-out;
+    transition: width 0.6s;
 }
 
-button {
-    width: 100%;
-    margin-top: 8px;
-    padding: 10px;
-    font-size: 14px;
-    background: #333;
-    color: #eee;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-}
-button:hover { background:#444; }
-
-input {
+button, input, select {
     width: 100%;
     margin-top: 6px;
     padding: 8px;
     border-radius: 6px;
     border: none;
+    background: #333;
+    color: #eee;
 }
+
+button:hover { background:#444; }
 
 .knight-container {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-top: 0;
 }
 
 .speech-bubble {
     background: #222;
-    color: #eee;
-    padding: 12px 16px;
+    padding: 12px;
     border-radius: 12px;
-    position: relative;
     max-width: 280px;
     font-family: 'Cinzel', serif;
-    box-shadow: 0 0 10px rgba(0,0,0,0.5);
-    margin-bottom: 4px;
+    margin-bottom: 6px;
 }
 
-.speech-bubble::after {
-    content: '';
-    position: absolute;
-    bottom: -12px;
-    left: 20px;
-    width: 0;
-    height: 0;
-    border-left: 10px solid transparent;
-    border-right: 10px solid transparent;
-    border-top: 12px solid #222;
-}
-
-.knight-img {
-    width: 120px;
-    height: auto;
-    border-radius: 8px;
-}
+.knight-img { width: 120px; }
 
 .controls-section {
     display: flex;
@@ -141,22 +107,22 @@ input {
         <h2>Thy system, my liege</h2>
         <p><b>IP:</b> {{ ip }}</p>
 
-        <div class="stat-label"><span class="icon">⚔️</span>Thy CPU <span id="cpuLabel">{{ cpu }}%</span></div>
+        <div class="stat-label">⚔️ CPU {{ cpu }}%</div>
         <div class="gauge"><div id="cpuGauge" class="gauge-inner" style="width:{{ cpu }}%;background:#c0392b">{{ cpu }}%</div></div>
 
-        <div class="stat-label"><span class="icon">🛡️</span>Thy Treasure <span id="diskLabel">{{ disk.used_percent }}%</span></div>
+        <div class="stat-label">🛡️ Disk {{ disk.used_percent }}%</div>
         <div class="gauge"><div id="diskGauge" class="gauge-inner" style="width:{{ disk.used_percent }}%;background:#e67e22">{{ disk.used_percent }}%</div></div>
 
-        <div class="stat-label"><span class="icon">📜</span>Thy Memory <span id="ramLabel">{{ ram }}%</span></div>
+        <div class="stat-label">📜 RAM {{ ram }}%</div>
         <div class="gauge"><div id="ramGauge" class="gauge-inner" style="width:{{ ram }}%;background:#8e44ad">{{ ram }}%</div></div>
 
-        <div class="stat-label"><span class="icon">👥</span>Sires <span id="usersLabel">{{ users }}</span></div>
+        <div class="stat-label">👥 Sires {{ users }}</div>
         <div class="gauge"><div id="usersGauge" class="gauge-inner" style="width:{{ users }}%;background:#27ae60">{{ users }}</div></div>
     </div>
 
     <div class="knight-container">
         <div class="speech-bubble">
-            Sire, I shall keep your Data safe at <b>\\templar\private</b>. Access in thy file explorer!
+            Sire, I shall guard thy network faithfully.
         </div>
         <img src="/static/knight.png" class="knight-img">
     </div>
@@ -164,13 +130,16 @@ input {
 
 <!-- CONTROLS -->
 <div class="controls-section">
+
+    <!-- Screen controls -->
     <div class="card">
-        <h3>Your will, Sire.</h3>
-        <button onclick="post('/api/rotate')">Rotate Screen 180°</button>
+        <h3>Your will, Sire</h3>
+        <button onclick="post('/api/rotate')">Rotate Screen</button>
         <button onclick="post('/api/invert')">Invert Screen</button>
         <button onclick="post('/api/refresh')">Refresh Screen</button>
     </div>
 
+    <!-- Password change -->
     <div class="card">
         <h3>Change thy secret phrase</h3>
         <input type="password" id="oldpw" placeholder="Current password">
@@ -179,68 +148,75 @@ input {
         <p id="pwstatus"></p>
     </div>
 
+    <!-- Network connection -->
     <div class="card">
         <h3>Conquer a new castle</h3>
+
+        <!-- Rescan dropdown -->
+        <select id="scannedNetworks">
+            <option disabled selected>Rescan to see networks...</option>
+        </select>
+        <button onclick="scanNetworks()">Rescan Networks</button>
+
+        <p style="text-align:center; margin:6px 0;">Input thy new castle from the list Sire!</p>
+
+        <!-- Manual SSID input -->
         <input type="text" id="ssid" placeholder="SSID">
         <input type="password" id="netpw" placeholder="Password">
         <button onclick="switchNetwork()">Connect</button>
+
         <p id="netstatus"></p>
     </div>
+
 </div>
 
 <script>
 function post(url) { fetch(url, { method: "POST" }); }
 
 async function changePassword() {
-    const resp = await fetch("/api/change_password", {
+    const r = await fetch("/api/change_password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            old: oldpw.value,
-            new: newpw.value
-        })
+        body: JSON.stringify({ old: oldpw.value, new: newpw.value })
     });
-    pwstatus.textContent = resp.ok ? "Password updated" : "Password change failed";
+    pwstatus.textContent = r.ok ? "Password updated" : "Failed";
 }
 
 async function switchNetwork() {
-    const resp = await fetch("/api/switch_network", {
+    const r = await fetch("/api/switch_network", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            ssid: ssid.value,
-            password: netpw.value
-        })
+        body: JSON.stringify({ ssid: ssid.value, password: netpw.value })
     });
-    const data = await resp.json();
-    netstatus.textContent = data.ok ? data.message : data.error;
+    const d = await r.json();
+    netstatus.textContent = d.ok ? d.message : d.error;
 }
 
-async function updateGauges() {
+// Scan Wi-Fi networks and populate dropdown
+async function scanNetworks() {
+    scannedNetworks.innerHTML = "<option>Scanning...</option>";
     try {
-        const r = await fetch("/api/stats");
-        const d = await r.json();
-
-        cpuGauge.style.width = d.cpu + "%";
-        cpuGauge.textContent = d.cpu + "%";
-        cpuLabel.textContent = d.cpu + "%";
-
-        diskGauge.style.width = d.disk.used_percent + "%";
-        diskGauge.textContent = d.disk.used_percent + "%";
-        diskLabel.textContent = d.disk.used_percent + "%";
-
-        ramGauge.style.width = d.ram + "%";
-        ramGauge.textContent = d.ram + "%";
-        ramLabel.textContent = d.ram + "%";
-
-        usersGauge.style.width = d.users + "%";
-        usersGauge.textContent = d.users;
-        usersLabel.textContent = d.users;
-    } catch(e) {}
-
-    setTimeout(updateGauges, 5000);
+        const r = await fetch("/api/scan_networks");
+        const nets = await r.json();
+        scannedNetworks.innerHTML = "";
+        for (const n of nets) {
+            const o = document.createElement("option");
+            o.value = n.ssid;
+            o.textContent = `${n.ssid} ${n.secure ? "🔒" : ""} (${n.signal}%)`;
+            scannedNetworks.appendChild(o);
+        }
+    } catch(e) {
+        scannedNetworks.innerHTML = "<option>Error scanning networks</option>";
+    }
 }
-updateGauges();
+
+// When a scanned network is selected, fill manual SSID
+scannedNetworks.addEventListener("change", () => {
+    ssid.value = scannedNetworks.value;
+});
+
+// Initial scan on page load
+scanNetworks();
 </script>
 
 </body>
