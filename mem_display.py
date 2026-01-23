@@ -24,35 +24,16 @@ GRAPHIC_COUNT = 10             # pik0.png .. pik9.png
 
 # ---------------- PHRASES ----------------
 PHRASES = [
-    ("Sire! Log in via thy browser!",
-     "Thy IP and port 8080"),
-
-    ("Sire! Thy IP and THY port!",
-     "They shall show the way!"),
-
-    ("Sire! IP:8080 login My liege!",
-     "Command thy legion!"),
-
-    ("Sire, Thy share \\\\IP\\private",
-     "I shall keep thy data safe!"),
-
-    ("I am PiTemplar sire!",
-     "Data Bank is my sacred duty!"),
-
-    ("Guard thy bits, my liege!",
-     "The vault stands ready!"),
-
-    ("Thy server awakens!",
-     "8080 awaits thy command!"),
-
-    ("Sire! Network stands firm!",
-     "No packets shall falter!"),
-
-    ("I watch thy disks, sire!",
-     "Not a byte goes astray!"),
-
-    ("Rest easy, my liege!",
-     "PiTemplar stands watch!")
+    ("Sire! Log in via thy browser!", "Thy IP and port 8080"),
+    ("Sire! Thy IP and THY port!", "They shall show the way!"),
+    ("Sire! IP:8080 login My liege!", "Command thy legion!"),
+    ("Sire, Thy share \\\\IP\\private", "I shall keep thy data safe!"),
+    ("I am PiTemplar sire!", "Data Bank is my sacred duty!"),
+    ("Guard thy bits, my liege!", "The vault stands ready!"),
+    ("Thy server awakens!", "8080 awaits thy command!"),
+    ("Sire! Network stands firm!", "No packets shall falter!"),
+    ("I watch thy disks, sire!", "Not a byte goes astray!"),
+    ("Rest easy, my liege!", "PiTemplar stands watch!")
 ]
 
 # ---------------- STATE ----------------
@@ -84,9 +65,14 @@ def get_cpu_temp():
 def get_disk_usage(path):
     d = shutil.disk_usage(path)
     used_percent = int((d.used / d.total) * 100)
-    total_gb = d.total / (1024 ** 3)
-    free_gb = d.free / (1024 ** 3)
-    return used_percent, total_gb, free_gb
+    return used_percent
+
+def get_ssid():
+    try:
+        ssid = os.popen("iwgetid -r").read().strip()
+        return ssid if ssid else "No WiFi"
+    except:
+        return "No WiFi"
 
 def read_control():
     try:
@@ -102,13 +88,11 @@ def write_control(data):
 # ---------------- DELAYED BOOT FLIP ----------------
 def delayed_flip():
     time.sleep(7)
-
     try:
         with open(CONTROL_FILE, "r") as f:
             control = json.load(f)
     except:
         control = {"flip": False, "invert": False, "refresh": False}
-
     control["flip"] = True
     with open(CONTROL_FILE, "w") as f:
         json.dump(control, f)
@@ -120,7 +104,16 @@ epd = epd2in13_V4.EPD()
 epd.init()
 epd.Clear(0xFF)
 
+# Default system font
 font = ImageFont.load_default()
+
+# Knightly title font (Pirata One)
+try:
+    title_font = ImageFont.truetype(
+        "fonts/PirataOne-Regular.ttf", 22   # height fits 5–30 px
+    )
+except:
+    title_font = font
 
 # ---------------- LOAD GRAPHICS ----------------
 graphics = []
@@ -131,7 +124,7 @@ for i in range(GRAPHIC_COUNT):
     else:
         graphics.append(None)
 
-print("mem_display.py started (pik0–pik9 cycle, 5 min)")
+print("mem_display.py started (Pirata One title + SSID + disk usage)")
 
 # ---------------- MAIN LOOP ----------------
 last_update = 0
@@ -141,19 +134,16 @@ while True:
     control = read_control()
     force_update = False
 
-    # Handle flip
     if control.get("flip"):
         ROTATED = not ROTATED
         control["flip"] = False
         force_update = True
 
-    # Handle invert
     if control.get("invert"):
         INVERTED = not INVERTED
         control["invert"] = False
         force_update = True
 
-    # Handle refresh
     if control.get("refresh"):
         control["refresh"] = False
         force_update = True
@@ -161,33 +151,36 @@ while True:
     if force_update:
         write_control(control)
 
-    # Update display if needed
     if force_update or (now - last_update) >= UPDATE_INTERVAL:
         last_update = now
 
-        # Advance graphic index safely
         GRAPHIC_INDEX = (GRAPHIC_INDEX + 1) % GRAPHIC_COUNT
 
-        used_percent, total_gb, free_gb = get_disk_usage(DISK_PATH)
+        used_percent = get_disk_usage(DISK_PATH)
+        ssid = get_ssid()
         ip_addr = get_ip("wlan0")
         cpu_temp = get_cpu_temp()
 
         image = Image.new('1', (epd.height, epd.width), 255)
         draw = ImageDraw.Draw(image)
 
-        # --- Phrase text (synced with image) ---
+        # ---------------- TITLE ----------------
+        draw.text((5, 5), "PiTemplar", font=title_font, fill=0)
+        draw.line((5, 30, epd.height - 5, 30), fill=0)
+
+        # ---------------- PHRASES ----------------
         line1, line2 = PHRASES[GRAPHIC_INDEX]
-        draw.text((5, 5), line1, font=font, fill=0)
-        draw.text((5, 20), line2, font=font, fill=0)
+        draw.text((5, 35), line1, font=font, fill=0)
+        draw.text((5, 48), line2, font=font, fill=0)
 
-        # --- System info ---
-        draw.text((5, 45), f"Disk Used: {used_percent}%", font=font, fill=0)
-        draw.text((5, 60), f"Free: {free_gb:.1f} GB", font=font, fill=0)
-        draw.text((5, 75), f"Total: {total_gb:.1f} GB", font=font, fill=0)
-        draw.text((5, 90), f"IP: {ip_addr}", font=font, fill=0)
-        draw.text((5, 105), f"CPU: {cpu_temp}", font=font, fill=0)
+        # ---------------- SYSTEM INFO ----------------
+        draw.text((5, 50), f"_____________________________", font=font, fill=0)
+        draw.text((5, 68), f"Disk Used: {used_percent}%", font=font, fill=0)
+        draw.text((5, 83), f"WiFi: {ssid}", font=font, fill=0)
+        draw.text((5, 97), f"IP: {ip_addr}", font=font, fill=0)
+        draw.text((5, 110), f"CPU: {cpu_temp}", font=font, fill=0)
 
-        # --- Graphic ---
+        # ---------------- GRAPHIC ----------------
         current_graphic = graphics[GRAPHIC_INDEX]
         if current_graphic:
             x = epd.height - current_graphic.width - 5
