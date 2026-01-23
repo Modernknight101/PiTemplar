@@ -18,7 +18,7 @@ Installation begins simply by downloading RaspberryPiImager, you want to use a P
 
 For this specific project, I named everything either PiTemplar or templar. so default username PiTemplar, default password pitemplar, device name PiTemplar. Feel free to make modifications but for initial setup purposes let's stick to this. Set up SSH as well with those credentials so you have an easy reference starting point and noo concerns over remembering credentials. The initial network can be either your home network, or setup a hotspot on your phone with SSID PiTemplar and password pitemplar initially then add your network on the web GUI once established. See the pattern here? Moving on...
 
-Once RaspberryPiOS Lite is installed (32 or 64 bit, doesn't really matter), Let's begin configuring the Pi to make components work. 
+Once RaspberryPiOS Lite is installed (32 preferably, doesn't really matter), Let's begin configuring the Pi to make components work. 
 
 Waveshare e-paper uses SPI.
 
@@ -39,8 +39,10 @@ Install Waveshare e-Paper library
 Install dependencies first:
 
 sudo apt update
+
 sudo apt install -y python3-pip python3-pil python3-numpy git
-pip3 install psutil
+
+sudo apt install python3-psutil
 
 
 Clone Waveshare’s repo:
@@ -49,10 +51,11 @@ git clone https://github.com/waveshareteam/e-Paper.git
 cd e-Paper/RaspberryPi_JetsonNano/python/examples/
 python3 epd_2in13_V4_test.py
 
-
 Your drivers will be here:
 
 ~/e-Paper/RaspberryPi_JetsonNano/python
+
+so make sure you are in /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/
 
 Identify your exact screen model (I used Waveshare v4)
 
@@ -60,15 +63,11 @@ Since you said v4, it’s usually one of these:
 
 epd2in13_V4
 
-epd2in9_V2
-
-epd4in2_V2
-
 Most Pi Zero projects use 2.13" v4, so I’ll assume:
 
 epd2in13_V4
 
-Now upload the mem_display.py to your python folder
+Now upload the mem_display.py and images (pik0.png - pik9.png) to your python folder using Filezilla or some other kind of FTP
 
 From the driver directory:
 
@@ -89,10 +88,13 @@ Edit crontab:
 
 crontab -e
 
+no crontab for pitemplar - using an empty one Select an editor. To change later, run select-editor again. 1. /bin/nano <---- easiest 2. /usr/bin/vim.tiny 3. /bin/ed Choose 1-3 [1]:
+
+pick option 1
 
 Add:
 
-reboot python3 /home/templar/e-Paper/RaspberryPi_JetsonNano/python/mem_display.py 
+@reboot python3 /home/templar/e-Paper/RaspberryPi_JetsonNano/python/mem_display.py 
 
 ⚠️ Important e-Paper Notes
 
@@ -102,13 +104,9 @@ Frequent refreshes shorten panel life
 
 Waveshare e-paper is slow by design — that’s normal
 
-sudo apt update 
-
-sudo apt install -y python3-psutil
-
  Make sure the script is executable (recommended)
 
-chmod +x /home/templar/e-Paper/RaspberryPi_JetsonNano/python/mem_display.py
+chmod +x /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/mem_display.py
 
 Create a systemd service file
 
@@ -122,9 +120,9 @@ After=multi-user.target
 
 [Service]
 Type=simple
-User=templar
-WorkingDirectory=/home/templar/e-Paper/RaspberryPi_JetsonNano/python
-ExecStart=/usr/bin/python3 /home/templar/e-Paper/RaspberryPi_JetsonNano/python/mem_display.py
+User=pitemplar
+WorkingDirectory=/home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python
+ExecStart=/usr/bin/python3 /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/mem_display.py
 Restart=always
 RestartSec=10
 Environment=PYTHONUNBUFFERED=1
@@ -157,10 +155,6 @@ You should see:
 Active: active (running)
 
 No red error messages
-
-To see logs:
-
-journalctl -u epaper-status.service -f
 
 🔁 Reboot test (important)
 sudo reboot
