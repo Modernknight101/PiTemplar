@@ -24,11 +24,9 @@ Waveshare e-paper uses SPI.
 
 sudo raspi-config
 
-
 Go to:
 
 Interface Options → SPI → Enable
-
 
 Reboot:
 
@@ -57,6 +55,8 @@ Your drivers will be here:
 
 so make sure you are in /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/
 
+cd /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/
+
 Identify your exact screen model (I used Waveshare v4)
 
 Since you said v4, it’s usually one of these:
@@ -67,7 +67,7 @@ Most Pi Zero projects use 2.13" v4, so I’ll assume:
 
 epd2in13_V4
 
-Now upload the mem_display.py and images (pik0.png - pik9.png) to your python folder using Filezilla or some other kind of FTP
+Now upload the mem_display.py and images (pik0.png - pik9.png) to your python folder using Filezilla or some other kind of FTP. Add all folders in there as well.
 
 From the driver directory:
 
