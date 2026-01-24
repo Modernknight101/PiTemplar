@@ -175,7 +175,7 @@ If it does → you’re done ✅
 ✅ Restart enabled if script crashes
 
 
-Now that the screen works, let's do web GUI next!
+################################Now that the screen works, let's do web GUI next!###############################################
 
 Here’s a step-by-step guide for your web GUI.
 
@@ -237,7 +237,9 @@ You should see something like:
 
 Active: active (running) since ...
 
-Once all is verified and good to go, let's do SAMBA to make it work as a true NAS
+Login to verify, open a browser and type IP:8080
+
+#################################Now let's do SAMBA to make it work as a true NAS###########################################
 
 sudo apt update
 sudo apt install -y samba samba-common-bin
