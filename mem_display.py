@@ -1,7 +1,10 @@
 import sys
 import os
 import threading
-sys.path.append(os.path.join(os.path.dirname(__file__), 'lib'))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+LIB_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "lib"))
+
+sys.path.append(LIB_DIR)
 
 import time
 import shutil
@@ -15,7 +18,7 @@ from waveshare_epd import epd2in13_V4
 
 # ---------------- CONFIG ----------------
 DISK_PATH = "/"
-UPDATE_INTERVAL = 90          # 1.5 minutes
+UPDATE_INTERVAL = 60          # 1 minute
 CONTROL_FILE = "control.json"
 STATE_FILE = "state.json"
 
