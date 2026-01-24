@@ -16,7 +16,7 @@ https://a.co/d/inzVWE7     Pisugar 3 battery, optional, but highly recommended. 
 
 Installation begins simply by downloading RaspberryPiImager, you want to use a Pi OS Lite for command line only. That's all you'll need.
 
-For this specific project, I named everything either PiTemplar or templar. so default username PiTemplar, default password pitemplar, device name PiTemplar. Feel free to make modifications but for initial setup purposes let's stick to this. Set up SSH as well with those credentials so you have an easy reference starting point and noo concerns over remembering credentials. The initial network can be either your home network, or setup a hotspot on your phone with SSID PiTemplar and password pitemplar initially then add your network on the web GUI once established. See the pattern here? Moving on...
+For this specific project, I named everything either PiTemplar or templar. so default username PiTemplar, default password pitemplar, device name PiTemplar. Feel free to make modifications but for initial setup purposes let's stick to this. Set up SSH as well with those credentials so you have an easy reference starting point and no concerns over remembering credentials. The initial network can be either your home network, or setup a hotspot on your phone with SSID PiTemplar and password pitemplar initially then add your network on the web GUI once established. See the pattern here? Moving on...
 
 Once RaspberryPiOS Lite is installed (32 preferably, doesn't really matter), Let's begin configuring the Pi to make components work. 
 
@@ -57,30 +57,22 @@ so make sure you are in /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/
 
 cd /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/
 
-Identify your exact screen model (I used Waveshare v4)
+Now clone the pitemplar repository 
 
-Since you said v4, it’s usually one of these:
-
-epd2in13_V4
-
-Most Pi Zero projects use 2.13" v4, so I’ll assume:
-
-epd2in13_V4
-
-Now upload the mem_display.py and images (pik0.png - pik9.png) to your python folder using Filezilla or some other kind of FTP. Add all folders in there as well.
+git clone https://github.com/Modernknight101/PiTemplar.git
 
 From the driver directory:
 
-cd ~/e-Paper/RaspberryPi_JetsonNano/python
+cd ~/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar
 python3 mem_display.py
 
 
 You should now see:
 
-RAM STATUS
-Used: XXX MB
-Total: XXX MB
-YY% Used
+Disk Used:
+Wifi:
+IP:
+CPU:
 
 Start on boot
 
@@ -94,19 +86,11 @@ pick option 1
 
 Add:
 
-@reboot python3 /home/templar/e-Paper/RaspberryPi_JetsonNano/python/mem_display.py 
-
-⚠️ Important e-Paper Notes
-
-Do NOT refresh too fast (≤30s is good)
-
-Frequent refreshes shorten panel life
-
-Waveshare e-paper is slow by design — that’s normal
+@reboot python3 /home/templar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/mem_display.py 
 
  Make sure the script is executable (recommended)
 
-chmod +x /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/mem_display.py
+chmod +x /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/mem_display.py
 
 Create a systemd service file
 
@@ -121,11 +105,12 @@ After=multi-user.target
 [Service]
 Type=simple
 User=pitemplar
-WorkingDirectory=/home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python
-ExecStart=/usr/bin/python3 /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/mem_display.py
+WorkingDirectory=/home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar
+ExecStart=/usr/bin/python3 /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/mem_display.py
 Restart=always
 RestartSec=10
 Environment=PYTHONUNBUFFERED=1
+
 
 [Install]
 WantedBy=multi-user.target
@@ -152,7 +137,19 @@ systemctl status epaper-status.service
 
 You should see:
 
-Active: active (running)
+● epaper-status.service - Waveshare ePaper System Status
+     Loaded: loaded (/etc/systemd/system/epaper-status.service; enabled; preset: enabled)
+     Active: active (running) since Fri 2026-01-23 22:35:35 MST; 29min ago
+ Invocation: 1cae31d444084afa96ccc125436a671e
+   Main PID: 904 (python3)
+      Tasks: 6 (limit: 373)
+        CPU: 1min 45.143s
+     CGroup: /system.slice/epaper-status.service
+             └─904 /usr/bin/python3 /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/mem_display.py
+
+Jan 23 22:35:35 PiTemplar systemd[1]: Started epaper-status.service - Waveshare ePaper System Status.
+Jan 23 22:35:39 PiTemplar python3[904]: mem_display.py started (Pirata One title + SSID + disk usage)
+
 
 No red error messages
 
@@ -180,11 +177,21 @@ If it does → you’re done ✅
 
 Now that the screen works, let's do web GUI next!
 
-upload all files to the same python folder. once you've done that, start the below steps.
-
 Here’s a step-by-step guide for your web GUI.
 
 1️⃣ Create a systemd service file
+
+sudo apt install -y python3-venv python3-full
+sudo apt install python3-full -y
+
+python3 -m venv venv
+source venv/bin/activate
+
+which python
+# Should output something like ~/PiTemplar/venv/bin/python
+
+pip install --upgrade pip
+pip install flask psutil
 
 Run:
 
@@ -199,28 +206,24 @@ After=network.target
 
 [Service]
 Type=simple
-User=templar
-WorkingDirectory=/home/templar/e-Paper/RaspberryPi_JetsonNano/python
-ExecStart=/usr/bin/python3 web_gui.py
+User=pitemplar
+WorkingDirectory=/home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar
+ExecStart=/home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/venv/bin/python /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/web_gui.py
 Restart=always
 RestartSec=5
+Environment=PYTHONUNBUFFERED=1
 
 [Install]
 WantedBy=multi-user.target
 
 
-Important:
-
-Replace User=templar with your username if different.
-
-Make sure WorkingDirectory points to the folder where web_gui.py lives.
-
-Make sure the path to Python matches your system (which python3 → usually /usr/bin/python3).
-
-2️⃣ Reload systemd to recognize the new service
 sudo systemctl daemon-reload
+sudo systemctl restart web_gui.service
+sudo systemctl status web_gui.service
 
-3️⃣ Enable it to start at boot
+
+Important:
+Restart at boot:
 sudo systemctl enable web_gui.service
 
 4️⃣ Start the service now
@@ -248,15 +251,21 @@ Verify:
 
 smbd --version
 
+should see 
+Version 4.22.6-Raspbian-4.22.6+dfsg-0+deb13u1+rpi1
+
 
 create the share
 
-mkdir /srv/templar/shares/private
-chmod 770 /srv/templar/shares/private
+sudo mkdir /srv/pitemplar
+sudo mkdir /srv/pitemplar/shares/
+sudo mkdir /srv/pitemplar/shares/private
+sudo chmod 770 /srv/pitemplar/shares/private
 
 sudo cp /etc/samba/smb.conf /etc/samba/smb.conf.bak  (maybe pull it to your drive via ftp)
 
-Edit Samba config
+Edit Samba config:
+
 sudo nano /etc/samba/smb.conf
 
 Replace everything below [global] with this:
@@ -264,28 +273,35 @@ Replace everything below [global] with this:
    workgroup = WORKGROUP
    server string = PiTemplar NAS
    netbios name = PITEMPLAR
-   security = user
-   map to guest = Bad User
+   security = USER
+   map to guest = Never
    dns proxy = no
    log file = /var/log/samba/log.%m
    max log size = 1000
+   load printers = no
+   printcap name = /dev/null
+   disable spoolss = yes
 
 [private]
-   path = /srv/templar/shares/private
+   path = /srv/pitemplar/shares/private
    browseable = yes
    writable = yes
    guest ok = no
    read only = no
-   valid users = templar
+   valid users = pitemplar
+
 
 Save and exit
+
+sudo nano /etc/samba/smb.conf
+
 
 Create Samba user
 
 Even though templar exists, Samba needs its own password.
 
-sudo smbpasswd -a templar
-sudo smbpasswd -e templar
+sudo smbpasswd -a pitemplar
+sudo smbpasswd -e pitemplar
 
 Restart and enable Samba
 sudo systemctl restart smbd
@@ -295,7 +311,7 @@ systemctl status smbd
 
 Test from another device
 Windows
-\\templar\private
+\\pitemplar\private
 
 macOS / Linux
 smb://templar/private
