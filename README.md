@@ -254,6 +254,12 @@ Windows
 macOS / Linux
 smb://templar/private
 
+To change passwords on the Share:
+
+sshPiTemplar@IP
+
+passwd <NEW PASSWORD>
+
 
 ########################## Let's do web GUI, Experimental, but will allow us to switch networks easier.#################################
 Here’s a step-by-step guide for your web GUI.
