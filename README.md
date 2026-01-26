@@ -175,71 +175,7 @@ If it does → you’re done ✅
 ✅ Restart enabled if script crashes
 
 
-################################Now that the screen works, let's do web GUI next!###############################################
-
-Here’s a step-by-step guide for your web GUI.
-
-1️⃣ Create a systemd service file
-
-sudo apt install -y python3-venv python3-full
-sudo apt install python3-full -y
-
-python3 -m venv venv
-source venv/bin/activate
-
-which python
-# Should output something like ~/PiTemplar/venv/bin/python
-
-pip install --upgrade pip
-pip install flask psutil
-
-Run:
-
-sudo nano /etc/systemd/system/web_gui.service
-
-
-Paste this:
-
-[Unit]
-Description=Raspberry Pi E-Paper Web GUI
-After=network.target
-
-[Service]
-Type=simple
-User=pitemplar
-WorkingDirectory=/home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar
-ExecStart=/home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/venv/bin/python /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/web_gui.py
-Restart=always
-RestartSec=5
-Environment=PYTHONUNBUFFERED=1
-
-[Install]
-WantedBy=multi-user.target
-
-
-sudo systemctl daemon-reload
-sudo systemctl restart web_gui.service
-sudo systemctl status web_gui.service
-
-
-Important:
-Restart at boot:
-sudo systemctl enable web_gui.service
-
-4️⃣ Start the service now
-sudo systemctl start web_gui.service
-
-5️⃣ Check status
-sudo systemctl status web_gui.service
-
-
-You should see something like:
-
-Active: active (running) since ...
-
-Login to verify, open a browser and type IP:8080
-
-#################################Now let's do SAMBA to make it work as a true NAS###########################################
+###################### Now let's do SAMBA to make it work as a true file server now that the screen works!##############################
 
 sudo apt update
 sudo apt install -y samba samba-common-bin
@@ -317,6 +253,72 @@ Windows
 
 macOS / Linux
 smb://templar/private
+
+
+########################## Let's do web GUI, Experimental, but will allow us to switch networks easier.#################################
+Here’s a step-by-step guide for your web GUI.
+
+1️⃣ Create a systemd service file
+
+sudo apt install -y python3-venv python3-full
+sudo apt install python3-full -y
+
+python3 -m venv venv
+source venv/bin/activate
+
+which python
+# Should output something like ~/PiTemplar/venv/bin/python
+
+pip install --upgrade pip
+pip install flask psutil
+
+Run:
+
+sudo nano /etc/systemd/system/web_gui.service
+
+
+Paste this:
+
+[Unit]
+Description=Raspberry Pi E-Paper Web GUI
+After=network.target
+
+[Service]
+Type=simple
+User=pitemplar
+WorkingDirectory=/home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar
+ExecStart=/home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/venv/bin/python /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/web_gui.py
+Restart=always
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target
+
+
+sudo systemctl daemon-reload
+sudo systemctl restart web_gui.service
+sudo systemctl status web_gui.service
+
+
+Important:
+Restart at boot:
+sudo systemctl enable web_gui.service
+
+4️⃣ Start the service now
+sudo systemctl start web_gui.service
+
+5️⃣ Check status
+sudo systemctl status web_gui.service
+
+
+You should see something like:
+
+Active: active (running) since ...
+
+Login to verify, open a browser and type IP:8080
+
+
 
 
 🎩 Thank You ♥
