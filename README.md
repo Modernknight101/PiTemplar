@@ -256,7 +256,7 @@ smb://templar/private
 
 To change passwords on the Share:
 
-sshPiTemplar@IP
+sshpitemplar@IP
 
 passwd <NEW PASSWORD>
 
