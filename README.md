@@ -20,6 +20,79 @@ For this specific project, I named everything either PiTemplar or templar. so de
 
 Once RaspberryPiOS Lite is installed (32 preferably, doesn't really matter), Let's begin configuring the Pi to make components work. 
 
+##################################### First, set up the pi to broadcast if not connected to any network ################################
+
+Update the Pi
+sudo apt update && sudo apt upgrade -y
+
+Install required packages
+sudo apt install hostapd dnsmasq -y
+
+Stop them for now:
+sudo systemctl stop hostapd
+sudo systemctl stop dnsmasq
+
+Give the Pi a static IP
+sudo nano /etc/dhcpcd.conf
+
+Add to the bottom:
+
+interface wlan0
+    static ip_address=192.168.4.1/24
+    nohook wpa_supplicant
+
+sudo reboot
+
+Configure hostapd (Wi-Fi network)
+sudo nano /etc/hostapd/hostapd.conf
+
+Paste:
+
+interface=wlan0
+driver=nl80211
+ssid=PiTemplar_AP
+hw_mode=g
+channel=7
+wmm_enabled=0
+macaddr_acl=0
+auth_algs=1
+ignore_broadcast_ssid=0
+wpa=2
+wpa_passphrase=pitemplar
+wpa_key_mgmt=WPA-PSK
+rsn_pairwise=CCMP
+
+Tell hostapd to use this file:
+sudo nano /etc/default/hostapd
+
+Uncomment and update this part DAEMON_CONF=""
+Change to:
+DAEMON_CONF="/etc/hostapd/hostapd.conf"
+
+Configure dnsmasq (DHCP)
+Backup original:
+sudo mv /etc/dnsmasq.conf /etc/dnsmasq.conf.orig
+
+Create new:
+sudo nano /etc/dnsmasq.conf
+
+Paste:
+
+interface=wlan0
+dhcp-range=192.168.4.10,192.168.4.50,255.255.255.0,24h
+
+Start services:
+
+sudo systemctl unmask hostapd
+sudo systemctl enable hostapd
+sudo systemctl enable dnsmasq
+sudo systemctl start hostapd
+sudo systemctl start dnsmasq
+
+Done!
+
+########################################## MAke the screen work, Bread and butter of PiTemplar!!!#######################################
+
 Waveshare e-paper uses SPI.
 
 sudo raspi-config
