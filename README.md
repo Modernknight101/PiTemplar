@@ -399,7 +399,9 @@ sudo systemctl start dnsmasq
 
 Done!
 
-Login IP is ping 192.168.4.1
+Login IP is 192.168.4.1
+
+You know the SSID and password...
 
 
 
