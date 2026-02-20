@@ -91,6 +91,11 @@ Add:
 
 @reboot python3 /home/templar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/mem_display.py 
 
+Save:
+
+CTRL+O → ENTER
+CTRL+X
+
  Make sure the script is executable (recommended)
 
 chmod +x /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/mem_display.py
@@ -180,36 +185,35 @@ If it does → you’re done ✅
 
 ###################### Now let's do SAMBA to make it work as a true file server now that the screen works!##############################
 
+#Process has been automated to make it more efficient.
+#!/bin/bash
+# ---------------------------------------
+# PiTemplar NAS & Samba Setup Script
+# ---------------------------------------
+# Exit on any error
+create the file:
+
+nano setup_pi_nas.sh
+
+
+# Paste contents. 
+
+
+set -e
+
+echo "=== 1️⃣ Install Samba & smbclient ==="
 sudo apt update
-sudo apt install -y samba samba-common-bin
+sudo apt install -y samba samba-common-bin smbclient
 
-once that install is done, do the smbclient
+echo "=== 2️⃣ Create shared directories ==="
+mkdir -p /srv/pitemplar/shares/private
+chown -R pitemplar:pitemplar /srv/pitemplar/shares
+chmod -R 770 /srv/pitemplar/shares
 
-sudo apt update
-sudo apt install -y smbclient
+echo "=== 3️⃣ Backup and write Samba config ==="
+cp /etc/samba/smb.conf /etc/samba/smb.conf.bak
 
-Verify: 
-
-smbd --version
-
-should see 
-Version 4.22.6-Raspbian-4.22.6+dfsg-0+deb13u1+rpi1
-
-
-create the share
-
-sudo mkdir /srv/pitemplar
-sudo mkdir /srv/pitemplar/shares/
-sudo mkdir /srv/pitemplar/shares/private
-sudo chmod 770 /srv/pitemplar/shares/private
-
-sudo cp /etc/samba/smb.conf /etc/samba/smb.conf.bak  (maybe pull it to your drive via ftp)
-
-Edit Samba config:
-
-sudo nano /etc/samba/smb.conf
-
-Replace everything below [global] with this:
+cat <<EOL > /etc/samba/smb.conf
 [global]
    workgroup = WORKGROUP
    server string = PiTemplar NAS
@@ -219,9 +223,6 @@ Replace everything below [global] with this:
    dns proxy = no
    log file = /var/log/samba/log.%m
    max log size = 1000
-   load printers = no
-   printcap name = /dev/null
-   disable spoolss = yes
 
 [private]
    path = /srv/pitemplar/shares/private
@@ -230,25 +231,49 @@ Replace everything below [global] with this:
    guest ok = no
    read only = no
    valid users = pitemplar
+EOL
+
+echo "=== 4️⃣ Add Samba user ==="
+echo "Please enter a Samba password for user 'pitemplar':"
+smbpasswd -a pitemplar
+smbpasswd -e pitemplar
+
+echo "=== 5️⃣ Restart Samba and enable at boot ==="
+systemctl restart smbd
+systemctl enable smbd
+
+echo "=== ✅ Setup complete! ==="
+echo "Test locally with: smbclient -L localhost -U pitemplar"
+echo "Access from Windows using: \\\\<Pi_IP>\\private"
+
+# paste contents above
+
+#Ctrl+O, Enter, Ctrl+X to save and exit
 
 
-Save and exit
+Make it executable:
 
-sudo nano /etc/samba/smb.conf
+chmod +x setup_pi_nas.sh
 
 
-Create Samba user
+Run it as root:
 
-Even though templar exists, Samba needs its own password.
+sudo ./setup_pi_nas.sh
 
-sudo smbpasswd -a pitemplar
-sudo smbpasswd -e pitemplar
+
+This script will:
+
+Install Samba and smbclient
+
+Create /srv/pitemplar/shares/private with correct permissions
+
+Backup and overwrite smb.conf with working settings
+
+Add and enable the Samba user
 
 Restart and enable Samba
-sudo systemctl restart smbd
-sudo systemctl enable smbd
 
-systemctl status smbd
+Afterwards, your Windows machine should be able to connect using the Pi’s Hostname or IP.
 
 Test from another device
 Windows
@@ -262,6 +287,7 @@ To change passwords on the Share:
 sshpitemplar@IP
 
 passwd <NEW PASSWORD>
+
 
 
 ########################## Let's do web GUI, Experimental, but will allow us to switch networks easier.#################################
