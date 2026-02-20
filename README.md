@@ -2,7 +2,7 @@
 
 ![Knight](pik1.png)
 
-PiTemplar is a local cloud\micro file server  that is interactive. It offers storage on your Local Area network anytime, anywhere!
+PiTemplar is a local cloud\micro file server that is interactive. It offers storage on your Local Area network anytime, anywhere!
 
 First step is obviously the hardware. 
 
@@ -19,7 +19,6 @@ Installation begins simply by downloading RaspberryPiImager, you want to use a P
 For this specific project, I named everything either PiTemplar or templar. so default username PiTemplar, default password pitemplar, device name PiTemplar. Feel free to make modifications but for initial setup purposes let's stick to this. Set up SSH as well with those credentials so you have an easy reference starting point and no concerns over remembering credentials. The initial network can be either your home network, or setup a hotspot on your phone with SSID PiTemplar and password pitemplar initially then add your network on the web GUI once established. See the pattern here? Moving on...
 
 Once RaspberryPiOS Lite is installed (32 preferably, doesn't really matter), Let's begin configuring the Pi to make components work. 
-
 
 ########################################## Make the screen work, Bread and butter of PiTemplar!!!#######################################
 
