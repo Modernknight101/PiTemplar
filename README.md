@@ -2,7 +2,7 @@
 
 ![Knight](pik1.png)
 
-PiTemplar is a local cloud NAS operated via Web GUI that is interactive. It offers storage on your Local Area network anytime, anywhere!
+PiTemplar is a local cloud\micro file server  that is interactive. It offers storage on your Local Area network anytime, anywhere!
 
 First step is obviously the hardware. 
 
