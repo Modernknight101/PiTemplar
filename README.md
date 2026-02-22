@@ -322,7 +322,7 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=/home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar
-ExecStart=/home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/venv/bin/python /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/web_gui.py
+ExecStart=/home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/web_gui.py
 Restart=always
 RestartSec=5
 Environment=PYTHONUNBUFFERED=1
@@ -335,6 +335,7 @@ sudo systemctl daemon-reload
 sudo systemctl restart web_gui.service
 sudo systemctl status web_gui.service
 
+#It will say  Loaded: loaded (/etc/systemd/system/web_gui.service; disabled; preset: enabled) that's normal
 
 Important:
 Restart at boot:
@@ -346,6 +347,7 @@ sudo systemctl start web_gui.service
 5️⃣ Check status
 sudo systemctl status web_gui.service
 
+sudo chmod +x /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/web_gui.py
 
 You should see something like:
 
