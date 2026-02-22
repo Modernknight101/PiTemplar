@@ -296,15 +296,16 @@ Here’s a step-by-step guide for your web GUI.
 
 sudo apt install -y python3-venv python3-full
 sudo apt install python3-full -y
+#The second one just confirms you have python installed
 
-python3 -m venv venv
-source venv/bin/activate
 
-which python
-# Should output something like ~/PiTemplar/venv/bin/python
+sudo apt install python3-flask
 
-pip install --upgrade pip
-pip install flask psutil
+sudo apt install dos2unix
+
+dos2unix /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/web_gui.py
+
+chmod +x /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/web_gui.py
 
 Run:
 
@@ -319,7 +320,7 @@ After=network.target
 
 [Service]
 Type=simple
-User=pitemplar
+User=root
 WorkingDirectory=/home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar
 ExecStart=/home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/venv/bin/python /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/web_gui.py
 Restart=always
