@@ -1,8 +1,13 @@
+#!/usr/bin/env python3
 from flask import Flask, render_template, jsonify, request, Response
 import json, time, subprocess
 from pathlib import Path
-import system_info
 import psutil
+
+try:
+    import system_info
+except ImportError:
+    system_info = None
 
 # ---------------------
 # App setup
@@ -79,23 +84,24 @@ def write_control(data):
 # ---------------------
 def get_cpu_percent():
     try:
-        t = system_info.get_cpu_temp()
-        if isinstance(t, str) and t.endswith("°C"):
-            return float(t[:-2])
-        if isinstance(t, (int, float)):
-            return float(t)
+        if system_info:
+            t = system_info.get_cpu_temp()
+            if isinstance(t, str) and t.endswith("°C"):
+                return float(t[:-2])
+            if isinstance(t, (int, float)):
+                return float(t)
     except:
         pass
     return 0
 
 def get_disk_info():
     try:
-        d = system_info.get_disk_usage()
-        return {
-            "used_percent": int(d.get("used_percent", 0))
-        }
+        if system_info:
+            d = system_info.get_disk_usage()
+            return {"used_percent": int(d.get("used_percent", 0))}
     except:
-        return {"used_percent": 0}
+        pass
+    return {"used_percent": 0}
 
 def get_ram_percent():
     try:
@@ -109,9 +115,16 @@ def get_ram_percent():
 @app.route("/")
 @requires_auth
 def dashboard():
+    ip = "0.0.0.0"
+    try:
+        if system_info:
+            ip = system_info.get_ip() or ip
+    except:
+        pass
+
     return render_template(
         "dashboard.html",
-        ip=system_info.get_ip() or "0.0.0.0",
+        ip=ip,
         cpu=get_cpu_percent(),
         disk=get_disk_info(),
         ram=get_ram_percent(),
@@ -175,7 +188,6 @@ def refresh():
 @app.route("/api/scan_networks")
 @requires_auth
 def scan_networks():
-    """Scan Wi-Fi networks and return as JSON"""
     try:
         result = subprocess.run(
             ["nmcli", "-t", "-f", "SSID,SECURITY,SIGNAL", "dev", "wifi"],
@@ -187,33 +199,37 @@ def scan_networks():
         for line in result.stdout.strip().split("\n"):
             if not line.strip():
                 continue
-            ssid, security, signal = line.split(":")
+            parts = line.split(":")
+            if len(parts) != 3:
+                continue
+            ssid, security, signal = parts
             networks.append({
                 "ssid": ssid.strip(),
                 "secure": bool(security.strip()),
                 "signal": int(signal) if signal.isdigit() else 0
             })
         return jsonify(networks)
-    except subprocess.CalledProcessError:
+    except:
         return jsonify([])
 
 @app.route("/api/switch_network", methods=["POST"])
 @requires_auth
 def switch_network():
-    """Connect to Wi-Fi using selected or manual SSID"""
     data = request.json
-    ssid_clean = data.get("ssid", "").strip()
+    ssid = data.get("ssid", "").strip()
     password = data.get("password", "").strip()
-    if not ssid_clean:
+
+    if not ssid:
         return jsonify(ok=False, error="SSID cannot be empty"), 400
+
     try:
         subprocess.run(
-            ["sudo", "nmcli", "dev", "wifi", "connect", ssid_clean, "password", password],
+            ["nmcli", "dev", "wifi", "connect", ssid, "password", password],
             check=True
         )
-        return jsonify(ok=True, message=f"Connected to {ssid_clean}")
-    except subprocess.CalledProcessError as e:
-        return jsonify(ok=False, error=str(e)), 500
+        return jsonify(ok=True, message=f"Connected to {ssid}")
+    except subprocess.CalledProcessError:
+        return jsonify(ok=False, error="Connection failed"), 500
 
 # ---------------------
 # Run
