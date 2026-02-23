@@ -292,31 +292,41 @@ passwd <NEW PASSWORD>
 
 
 
-########################## Let's do web GUI, Experimental, but will allow us to switch networks easier.#################################
-Here’s a step-by-step guide for your web GUI.
+########################## Let's do web GUI, this will allow us to switch networks easier.#################################
+This process is automated with a Bash script to eliminate potential errors.
 
-1️⃣ Create a systemd service file
+sudo nano setup_web_gui.sh
 
-sudo apt install -y python3-venv python3-full
-sudo apt install python3-full -y
-#The second one just confirms you have python installed
+# Paste the script, save and exit
 
 
-sudo apt install python3-flask
+#!/bin/bash
+# -------------------------------------------------------------------
+# PiTemplar Web GUI Setup Script
+# Installs dependencies, fixes permissions, and sets up systemd service
+# -------------------------------------------------------------------
 
-sudo apt install dos2unix
+# Paths
+WEB_GUI_DIR="/home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar"
+WEB_GUI_SCRIPT="$WEB_GUI_DIR/web_gui.py"
+SERVICE_FILE="/etc/systemd/system/web_gui.service"
 
-dos2unix /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/web_gui.py
+# 1️⃣ Update system and install Python3 and dependencies
+echo "Installing Python3 and Flask..."
+sudo apt update
+sudo apt install -y python3-full python3-venv python3-flask dos2unix
 
-chmod +x /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/web_gui.py
+# 2️⃣ Fix line endings (Windows → Linux)
+echo "Fixing line endings for web_gui.py..."
+sudo dos2unix "$WEB_GUI_SCRIPT"
 
-Run:
+# 3️⃣ Make script executable
+echo "Setting executable permissions..."
+sudo chmod +x "$WEB_GUI_SCRIPT"
 
-sudo nano /etc/systemd/system/web_gui.service
-
-
-Paste this:
-
+# 4️⃣ Create systemd service file
+echo "Creating systemd service..."
+sudo tee "$SERVICE_FILE" > /dev/null <<EOL
 [Unit]
 Description=Raspberry Pi E-Paper Web GUI
 After=network.target
@@ -324,42 +334,42 @@ After=network.target
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar
-ExecStart=/home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/web_gui.py
+WorkingDirectory=$WEB_GUI_DIR
+ExecStart=/usr/bin/python3 $WEB_GUI_SCRIPT
 Restart=always
 RestartSec=5
 Environment=PYTHONUNBUFFERED=1
 
 [Install]
 WantedBy=multi-user.target
+EOL
 
-
+# 5️⃣ Reload systemd and enable/start service
+echo "Reloading systemd..."
 sudo systemctl daemon-reload
-sudo systemctl restart web_gui.service
-sudo systemctl status web_gui.service
 
-#It will say  Loaded: loaded (/etc/systemd/system/web_gui.service; disabled; preset: enabled) that's normal
-
-Important:
-Restart at boot:
+echo "Enabling service to start on boot..."
 sudo systemctl enable web_gui.service
 
-4️⃣ Start the service now
-sudo systemctl start web_gui.service
+echo "Starting web_gui service..."
+sudo systemctl restart web_gui.service
 
-5️⃣ Check status
-sudo systemctl status web_gui.service
+# 6️⃣ Show status
+echo "Service status:"
+sudo systemctl status web_gui.service --no-pager
 
-sudo chmod +x /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/web_gui.py
-
-You should see something like:
-
-Active: active (running) since ...
-
-Login to verify, open a browser and type IP:8080
+echo "Setup complete! You can access the web GUI at http://<YOUR_PI_IP>:8080"
 
 
-##################################### Now set up the pi to broadcast if not connected to any network ################################
+# Save it ctrl O + ctrl X
+
+sudo chmod +x setup_web_gui.sh
+
+sudo bash setup_web_gui.sh
+
+After this the Web GUI should be up. Login with <IP>:8080 and check out the features!
+
+############## Now set up the pi to broadcast if not connected to any network. Not necessary and experimental but fun! ################
 
 Update the Pi
 sudo apt update && sudo apt upgrade -y
