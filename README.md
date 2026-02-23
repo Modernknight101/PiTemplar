@@ -261,6 +261,7 @@ Run it as root:
 
 sudo ./setup_pi_nas.sh
 
+NOTE: At one point it will ask you for a new password. pitemplar is the default but you may change it there!
 
 This script will:
 
