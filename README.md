@@ -76,6 +76,8 @@ Wifi:
 IP:
 CPU:
 
+Now stop it with Ctrl+C so you can finish the program.
+
 Start on boot
 
 Edit crontab:
