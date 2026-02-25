@@ -1,31 +1,33 @@
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+
 import sys
 import os
 import threading
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-LIB_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "lib"))
-
-sys.path.append(LIB_DIR)
-
 import time
 import shutil
 import socket
 import fcntl
 import struct
 import json
-
 from PIL import Image, ImageDraw, ImageFont, ImageOps
-from waveshare_epd import epd2in13_V4
+
+# ---------------- ADD LIB TO PATH ----------------
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+LIB_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "lib"))
+sys.path.append(LIB_DIR)
+
+from waveshare_epd import epd2in13_V4  # change to epd4in2_V2 if needed
 
 # ---------------- CONFIG ----------------
 DISK_PATH = "/"
-UPDATE_INTERVAL = 120         # 2 minutes
 CONTROL_FILE = "control.json"
 STATE_FILE = "state.json"
 
 GRAPHIC_PREFIX = "pik"
-GRAPHIC_COUNT = 10             # pik0.png .. pik9.png
+GRAPHIC_COUNT = 10
+INTERVAL = 7  # seconds
 
-# ---------------- PHRASES ----------------
 PHRASES = [
     ("Sire! Log in via thy browser!", "Thy IP and port 8080"),
     ("Sire! Thy IP and THY port!", "They shall show the way!"),
@@ -42,7 +44,7 @@ PHRASES = [
 # ---------------- STATE ----------------
 ROTATED = False
 INVERTED = False
-GRAPHIC_INDEX = 8              # starts at pik8.png
+GRAPHIC_INDEX = 8  # start at pik8.png
 
 # ---------------- FUNCTIONS ----------------
 def get_ip(ifname='wlan0'):
@@ -91,14 +93,9 @@ def write_control(data):
 # ---------------- DELAYED BOOT FLIP ----------------
 def delayed_flip():
     time.sleep(7)
-    try:
-        with open(CONTROL_FILE, "r") as f:
-            control = json.load(f)
-    except:
-        control = {"flip": False, "invert": False, "refresh": False}
+    control = read_control()
     control["flip"] = True
-    with open(CONTROL_FILE, "w") as f:
-        json.dump(control, f)
+    write_control(control)
 
 threading.Thread(target=delayed_flip, daemon=True).start()
 
@@ -107,18 +104,14 @@ epd = epd2in13_V4.EPD()
 epd.init()
 epd.Clear(0xFF)
 
-# Default system font
+# Fonts
 font = ImageFont.load_default()
-
-# Knightly title font (Pirata One)
 try:
-    title_font = ImageFont.truetype(
-        "fonts/PirataOne-Regular.ttf", 22   # height fits 5–30 px
-    )
+    title_font = ImageFont.truetype("fonts/PirataOne-Regular.ttf", 22)
 except:
     title_font = font
 
-# ---------------- LOAD GRAPHICS ----------------
+# Load graphics at original size
 graphics = []
 for i in range(GRAPHIC_COUNT):
     filename = f"{GRAPHIC_PREFIX}{i}.png"
@@ -127,13 +120,10 @@ for i in range(GRAPHIC_COUNT):
     else:
         graphics.append(None)
 
-print("mem_display.py started (Pirata One title + SSID + disk usage)")
+print("mem_display_partial.py started (Pirata One title + system info)")
 
 # ---------------- MAIN LOOP ----------------
-last_update = 0
-
 while True:
-    now = time.time()
     control = read_control()
     force_update = False
 
@@ -154,57 +144,55 @@ while True:
     if force_update:
         write_control(control)
 
-    if force_update or (now - last_update) >= UPDATE_INTERVAL:
-        last_update = now
+    # ---------------- UPDATE DISPLAY ----------------
+    GRAPHIC_INDEX = (GRAPHIC_INDEX + 1) % GRAPHIC_COUNT
 
-        GRAPHIC_INDEX = (GRAPHIC_INDEX + 1) % GRAPHIC_COUNT
+    used_percent = get_disk_usage(DISK_PATH)
+    ssid = get_ssid()
+    ip_addr = get_ip("wlan0")
+    cpu_temp = get_cpu_temp()
 
-        used_percent = get_disk_usage(DISK_PATH)
-        ssid = get_ssid()
-        ip_addr = get_ip("wlan0")
-        cpu_temp = get_cpu_temp()
+    image = Image.new('1', (epd.height, epd.width), 255)
+    draw = ImageDraw.Draw(image)
 
-        image = Image.new('1', (epd.height, epd.width), 255)
-        draw = ImageDraw.Draw(image)
+    # Title
+    draw.text((5, 5), "PiTemplar", font=title_font, fill=0)
+    draw.line((5, 30, epd.height - 5, 30), fill=0)
 
-        # ---------------- TITLE ----------------
-        draw.text((5, 5), "PiTemplar", font=title_font, fill=0)
-        draw.line((5, 30, epd.height - 5, 30), fill=0)
+    # Phrases
+    line1, line2 = PHRASES[GRAPHIC_INDEX]
+    draw.text((5, 35), line1, font=font, fill=0)
+    draw.text((5, 48), line2, font=font, fill=0)
 
-        # ---------------- PHRASES ----------------
-        line1, line2 = PHRASES[GRAPHIC_INDEX]
-        draw.text((5, 35), line1, font=font, fill=0)
-        draw.text((5, 48), line2, font=font, fill=0)
+    # System info
+    draw.text((5, 50), "_____________________________", font=font, fill=0)
+    draw.text((5, 68), f"Disk Used: {used_percent}%", font=font, fill=0)
+    draw.text((5, 83), f"WiFi: {ssid}", font=font, fill=0)
+    draw.text((5, 97), f"IP: {ip_addr}", font=font, fill=0)
+    draw.text((5, 110), f"CPU: {cpu_temp}", font=font, fill=0)
 
-        # ---------------- SYSTEM INFO ----------------
-        draw.text((5, 50), f"_____________________________", font=font, fill=0)
-        draw.text((5, 68), f"Disk Used: {used_percent}%", font=font, fill=0)
-        draw.text((5, 83), f"WiFi: {ssid}", font=font, fill=0)
-        draw.text((5, 97), f"IP: {ip_addr}", font=font, fill=0)
-        draw.text((5, 110), f"CPU: {cpu_temp}", font=font, fill=0)
+    # Graphic at original size/position
+    current_graphic = graphics[GRAPHIC_INDEX]
+    if current_graphic:
+        x = epd.height - current_graphic.width - 5
+        y = 5
+        image.paste(current_graphic, (x, y))
 
-        # ---------------- GRAPHIC ----------------
-        current_graphic = graphics[GRAPHIC_INDEX]
-        if current_graphic:
-            x = epd.height - current_graphic.width - 5
-            image.paste(current_graphic, (x, 5))
+    # Rotation/Inversion
+    if ROTATED:
+        image = image.rotate(180)
+    if INVERTED:
+        image = ImageOps.invert(image.convert("L")).convert("1")
 
-        if ROTATED:
-            image = image.rotate(180)
+    # Partial refresh
+    epd.displayPartial(epd.getbuffer(image))
 
-        if INVERTED:
-            image = ImageOps.invert(image.convert("L")).convert("1")
+    # Save state
+    with open(STATE_FILE, "w") as f:
+        json.dump({
+            "rotated": ROTATED,
+            "inverted": INVERTED,
+            "graphic": f"pik{GRAPHIC_INDEX}"
+        }, f)
 
-        epd.display(epd.getbuffer(image))
-
-        with open(STATE_FILE, "w") as f:
-            json.dump(
-                {
-                    "rotated": ROTATED,
-                    "inverted": INVERTED,
-                    "graphic": f"pik{GRAPHIC_INDEX}"
-                },
-                f
-            )
-
-    time.sleep(1)
+    time.sleep(INTERVAL)
