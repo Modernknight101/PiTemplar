@@ -1,30 +1,42 @@
-
 #!/bin/bash
 # -------------------------------------------------------------------
 # PiTemplar Web GUI Setup Script
-# Installs dependencies, fixes permissions, and sets up systemd service
+# Installs dependencies, fixes permissions, sets up sudoers, and systemd
 # -------------------------------------------------------------------
 
 # Paths
 WEB_GUI_DIR="/home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar"
 WEB_GUI_SCRIPT="$WEB_GUI_DIR/web_gui.py"
 SERVICE_FILE="/etc/systemd/system/web_gui.service"
+SUDOERS_FILE="/etc/sudoers.d/pitemplar_shutdown"
 
-# 1️⃣ Update system and install Python3 and dependencies
-echo "Installing Python3 and Flask..."
+echo "----------------------------------------"
+echo "1️⃣ Installing Python3 and Flask..."
 sudo apt update
 sudo apt install -y python3-full python3-venv python3-flask dos2unix
 
-# 2️⃣ Fix line endings (Windows → Linux)
-echo "Fixing line endings for web_gui.py..."
+echo "----------------------------------------"
+echo "2️⃣ Fixing line endings for web_gui.py..."
 sudo dos2unix "$WEB_GUI_SCRIPT"
 
-# 3️⃣ Make script executable
-echo "Setting executable permissions..."
+echo "----------------------------------------"
+echo "3️⃣ Making script executable..."
 sudo chmod +x "$WEB_GUI_SCRIPT"
 
-# 4️⃣ Create systemd service file
-echo "Creating systemd service..."
+echo "----------------------------------------"
+echo "3.5️⃣ Configuring reboot permission for pitemplar..."
+SHUTDOWN_PATH=$(which shutdown)
+
+if [ ! -f "$SUDOERS_FILE" ]; then
+    echo "pitemplar ALL=(ALL) NOPASSWD: $SHUTDOWN_PATH" | sudo tee "$SUDOERS_FILE" > /dev/null
+    sudo chmod 440 "$SUDOERS_FILE"
+    echo "Sudoers entry created."
+else
+    echo "Sudoers entry already exists. Skipping."
+fi
+
+echo "----------------------------------------"
+echo "4️⃣ Creating systemd service..."
 sudo tee "$SERVICE_FILE" > /dev/null <<EOL
 [Unit]
 Description=Raspberry Pi E-Paper Web GUI
@@ -32,7 +44,7 @@ After=network.target
 
 [Service]
 Type=simple
-User=root
+User=pitemplar
 WorkingDirectory=$WEB_GUI_DIR
 ExecStart=/usr/bin/python3 $WEB_GUI_SCRIPT
 Restart=always
@@ -43,18 +55,19 @@ Environment=PYTHONUNBUFFERED=1
 WantedBy=multi-user.target
 EOL
 
-# 5️⃣ Reload systemd and enable/start service
-echo "Reloading systemd..."
+echo "----------------------------------------"
+echo "5️⃣ Reloading systemd..."
 sudo systemctl daemon-reload
 
-echo "Enabling service to start on boot..."
+echo "6️⃣ Enabling service to start on boot..."
 sudo systemctl enable web_gui.service
 
-echo "Starting web_gui service..."
+echo "7️⃣ Starting web_gui service..."
 sudo systemctl restart web_gui.service
 
-# 6️⃣ Show status
-echo "Service status:"
+echo "----------------------------------------"
+echo "8️⃣ Checking service status..."
 sudo systemctl status web_gui.service --no-pager
 
-echo "Setup complete! You can access the web GUI at http://<YOUR_PI_IP>:8080"
+echo "----------------------------------------"
+echo "Setup complete! Access the web GUI at http://<YOUR_PI_IP>:8080"
