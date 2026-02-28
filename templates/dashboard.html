@@ -101,47 +101,43 @@ button:hover { background:#444; }
 
 <body>
 
-<!-- SYSTEM STATUS + KNIGHT -->
 <div class="status-knight-container">
     <div class="card">
         <h2>Thy system, my liege</h2>
         <p><b>IP:</b> {{ ip }}</p>
 
         <div class="stat-label">⚔️ CPU {{ cpu }}%</div>
-        <div class="gauge"><div id="cpuGauge" class="gauge-inner" style="width:{{ cpu }}%;background:#c0392b">{{ cpu }}%</div></div>
+        <div class="gauge"><div class="gauge-inner" style="width:{{ cpu }}%;background:#c0392b">{{ cpu }}%</div></div>
 
         <div class="stat-label">🛡️ Disk {{ disk.used_percent }}%</div>
-        <div class="gauge"><div id="diskGauge" class="gauge-inner" style="width:{{ disk.used_percent }}%;background:#e67e22">{{ disk.used_percent }}%</div></div>
+        <div class="gauge"><div class="gauge-inner" style="width:{{ disk.used_percent }}%;background:#e67e22">{{ disk.used_percent }}%</div></div>
 
         <div class="stat-label">📜 RAM {{ ram }}%</div>
-        <div class="gauge"><div id="ramGauge" class="gauge-inner" style="width:{{ ram }}%;background:#8e44ad">{{ ram }}%</div></div>
+        <div class="gauge"><div class="gauge-inner" style="width:{{ ram }}%;background:#8e44ad">{{ ram }}%</div></div>
 
         <div class="stat-label">👥 Sires {{ users }}</div>
-        <div class="gauge"><div id="usersGauge" class="gauge-inner" style="width:{{ users }}%;background:#27ae60">{{ users }}</div></div>
+        <div class="gauge"><div class="gauge-inner" style="width:{{ users }}%;background:#27ae60">{{ users }}</div></div>
     </div>
 
     <div class="knight-container">
         <div class="speech-bubble">
             Sire, Login to thy share! 
-			I shall keep thy data safe at 
-			\\PiTemplar\private
+            I shall keep thy data safe at 
+            \\Templar\private
         </div>
         <img src="/static/knight.png" class="knight-img">
     </div>
 </div>
 
-<!-- CONTROLS -->
 <div class="controls-section">
 
-    <!-- Screen controls -->
     <div class="card">
         <h3>Your will, Sire</h3>
         <button onclick="post('/api/rotate')">Rotate Screen</button>
         <button onclick="post('/api/invert')">Invert Screen</button>
-        <button onclick="post('/api/refresh')">Refresh Screen</button>
+        <button onclick="rebootSystem()">Reboot System</button>
     </div>
 
-    <!-- Password change -->
     <div class="card">
         <h3>Change thy secret phrase</h3>
         <input type="password" id="oldpw" placeholder="Current password">
@@ -150,11 +146,9 @@ button:hover { background:#444; }
         <p id="pwstatus"></p>
     </div>
 
-    <!-- Network connection -->
     <div class="card">
         <h3>Conquer a new castle</h3>
 
-        <!-- Rescan dropdown -->
         <select id="scannedNetworks">
             <option disabled selected>Rescan to see networks...</option>
         </select>
@@ -162,7 +156,6 @@ button:hover { background:#444; }
 
         <p style="text-align:center; margin:6px 0;">Input thy new castle from the list Sire!</p>
 
-        <!-- Manual SSID input -->
         <input type="text" id="ssid" placeholder="SSID">
         <input type="password" id="netpw" placeholder="Password">
         <button onclick="switchNetwork()">Connect</button>
@@ -174,6 +167,12 @@ button:hover { background:#444; }
 
 <script>
 function post(url) { fetch(url, { method: "POST" }); }
+
+async function rebootSystem() {
+    if (!confirm("Reboot the system, my liege?")) return;
+    await fetch("/api/reboot", { method: "POST" });
+    alert("The realm shall fall... and rise anew.");
+}
 
 async function changePassword() {
     const r = await fetch("/api/change_password", {
@@ -194,7 +193,6 @@ async function switchNetwork() {
     netstatus.textContent = d.ok ? d.message : d.error;
 }
 
-// Scan Wi-Fi networks and populate dropdown
 async function scanNetworks() {
     scannedNetworks.innerHTML = "<option>Scanning...</option>";
     try {
@@ -212,12 +210,10 @@ async function scanNetworks() {
     }
 }
 
-// When a scanned network is selected, fill manual SSID
 scannedNetworks.addEventListener("change", () => {
     ssid.value = scannedNetworks.value;
 });
 
-// Initial scan on page load
 scanNetworks();
 </script>
 
