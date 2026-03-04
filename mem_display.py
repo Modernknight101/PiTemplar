@@ -38,7 +38,7 @@ PHRASES = [
     ("Thy server awakens!", "8080 awaits thy command!"),
     ("Sire! Network stands firm!", "No packets shall falter!"),
     ("I watch thy disks, sire!", "Not a byte goes astray!"),
-    ("Rest easy, my liege!", "PiTemplar Version 1.2.0")
+    ("Rest easy, my liege!", "PiTemplar Version 1.2.1")
 ]
 
 # ---------------- STATE ----------------
