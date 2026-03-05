@@ -244,7 +244,19 @@ pitemplar ALL=(ALL) NOPASSWD: /usr/bin/nmcli, /sbin/shutdown, /usr/bin/ip, /usr/
 
 After this the Web GUI should be up. Login with <IP>:8080 and check out the features!
 
+#####################################################Useful commands####################################################################
 
+#nmcli connection -help
+
+#nmcli connection show
+
+#nmcli dev wifi list
+
+#nmcli dev wifi rescan
+
+#nmcli dev wifi -help
+
+#Theese will display currently known connections, currently available networks, and using the -help command, you can see the syntax to add or remove a wifi connection.
 
 🎩 Thank You ♥
 💖 Support Me
