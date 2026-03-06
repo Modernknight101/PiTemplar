@@ -74,6 +74,12 @@ chmod +x setup_epaper_service.sh
 
 sudo ./setup_epaper_service.sh
 
+quick check:
+
+systemctl status epaper-status.service
+
+should be no errors
+
 🔁 Reboot test (important)
 sudo reboot
 
