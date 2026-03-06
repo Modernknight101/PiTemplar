@@ -42,6 +42,8 @@ Install dependencies first:
 
 sudo apt update
 
+sudo apt upgrade -y
+
 sudo apt install -y python3-pip python3-pil python3-numpy git
 
 sudo apt install python3-psutil
@@ -50,6 +52,7 @@ sudo apt install python3-psutil
 Clone Waveshare’s repo:
 
 git clone https://github.com/waveshareteam/e-Paper.git
+
 cd e-Paper/RaspberryPi_JetsonNano/python/examples/
 python3 epd_2in13_V4_test.py
 
@@ -65,107 +68,27 @@ Now clone the pitemplar repository
 
 git clone https://github.com/Modernknight101/PiTemplar.git
 
-From the driver directory:
+cd /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar
 
-cd ~/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar
-python3 mem_display.py
+chmod +x setup_epaper_service.sh
 
+sudo ./setup_epaper_service.sh
 
-You should now see:
+quick check:
 
-Disk Used:
-Wifi:
-IP:
-CPU:
+systemctl status epaper-status.service
 
-Now stop it with Ctrl+C so you can finish the program.
-
-Start on boot
-
-Edit crontab:
+should be no errors
 
 crontab -e
 
-no crontab for pitemplar - using an empty one Select an editor. To change later, run select-editor again. 1. /bin/nano <---- easiest 2. /usr/bin/vim.tiny 3. /bin/ed Choose 1-3 [1]:
+remove:
 
-pick option 1
+@reboot python3 /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/mem_display.py
 
-Add:
+ctrl+O
 
-@reboot python3 /home/templar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/mem_display.py 
-
-Save:
-
-CTRL+O → ENTER
-CTRL+X
-
- Make sure the script is executable (recommended)
-
-chmod +x /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/mem_display.py
-
-Create a systemd service file
-
-sudo nano /etc/systemd/system/epaper-status.service
-
-Paste exactly this (adjust nothing unless noted):
-
-[Unit]
-Description=Waveshare ePaper System Status
-After=multi-user.target
-
-[Service]
-Type=simple
-User=pitemplar
-WorkingDirectory=/home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar
-ExecStart=/usr/bin/python3 /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/mem_display.py
-Restart=always
-RestartSec=10
-Environment=PYTHONUNBUFFERED=1
-
-
-[Install]
-WantedBy=multi-user.target
-
-
-Save:
-
-CTRL+O → ENTER
-CTRL+X
-
-Reload systemd and enable the service
-
-sudo systemctl daemon-reexec
-
-sudo systemctl daemon-reload
-
-sudo systemctl enable epaper-status.service
-
-Start it now (no reboot needed)
-sudo systemctl start epaper-status.service
-
-Within ~30 seconds, your e-paper should update.
-
-Check status (VERY useful)
-systemctl status epaper-status.service
-
-
-You should see:
-
-● epaper-status.service - Waveshare ePaper System Status
-     Loaded: loaded (/etc/systemd/system/epaper-status.service; enabled; preset: enabled)
-     Active: active (running) since Fri 2026-01-23 22:35:35 MST; 29min ago
- Invocation: 1cae31d444084afa96ccc125436a671e
-   Main PID: 904 (python3)
-      Tasks: 6 (limit: 373)
-        CPU: 1min 45.143s
-     CGroup: /system.slice/epaper-status.service
-             └─904 /usr/bin/python3 /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/mem_display.py
-
-Jan 23 22:35:35 PiTemplar systemd[1]: Started epaper-status.service - Waveshare ePaper System Status.
-Jan 23 22:35:39 PiTemplar python3[904]: mem_display.py started (Pirata One title + SSID + disk usage)
-
-
-No red error messages
+ctrl+X
 
 🔁 Reboot test (important)
 sudo reboot
@@ -234,7 +157,19 @@ sudo ./setup_web_gui.sh
 
 After this the Web GUI should be up. Login with <IP>:8080 and check out the features!
 
+#####################################################Useful commands####################################################################
 
+#nmcli connection -help
+
+#nmcli connection show
+
+#nmcli dev wifi list
+
+#nmcli dev wifi rescan
+
+#nmcli dev wifi -help
+
+#Theese will display currently known connections, currently available networks, and using the -help command, you can see the syntax to add or remove a wifi connection.
 
 🎩 Thank You ♥
 💖 Support Me

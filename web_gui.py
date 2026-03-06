@@ -12,10 +12,6 @@ try:
 except ImportError:
     system_info = None
 
-
-# ==========================================================
-# App Setup
-# ==========================================================
 app = Flask(__name__)
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -24,7 +20,6 @@ CONTROL_FILE = BASE_DIR / "control.json"
 
 SESSION_TIMEOUT = 300  # seconds
 ACTIVE_USERS = {}
-
 
 # ==========================================================
 # Authentication
@@ -35,16 +30,13 @@ def load_auth():
     with open(AUTH_FILE) as f:
         return json.load(f)
 
-
 def save_auth(data):
     with open(AUTH_FILE, "w") as f:
         json.dump(data, f)
 
-
 def check_auth(username, password):
     auth = load_auth()
     return username == auth["username"] and password == auth["password"]
-
 
 def authenticate():
     return Response(
@@ -53,10 +45,8 @@ def authenticate():
         {"WWW-Authenticate": 'Basic realm="PiTemplar Login"'}
     )
 
-
 def track_user(auth):
     ACTIVE_USERS[f"{auth.username}@{request.remote_addr}"] = time.time()
-
 
 def cleanup_users():
     now = time.time()
@@ -64,10 +54,8 @@ def cleanup_users():
         if now - t > SESSION_TIMEOUT:
             del ACTIVE_USERS[k]
 
-
 def requires_auth(f):
     from functools import wraps
-
     @wraps(f)
     def decorated(*args, **kwargs):
         auth = request.authorization
@@ -76,14 +64,11 @@ def requires_auth(f):
         track_user(auth)
         cleanup_users()
         return f(*args, **kwargs)
-
     return decorated
-
 
 def active_user_count():
     cleanup_users()
     return len(ACTIVE_USERS)
-
 
 # ==========================================================
 # Control File (Screen Flip / Invert)
@@ -97,11 +82,9 @@ def read_control():
     except:
         return {"flip": False, "invert": False}
 
-
 def write_control(data):
     with open(CONTROL_FILE, "w") as f:
         json.dump(data, f)
-
 
 # ==========================================================
 # System Stats
@@ -118,7 +101,6 @@ def get_cpu_value():
         pass
     return 0
 
-
 def get_disk_info():
     try:
         if system_info:
@@ -128,13 +110,11 @@ def get_disk_info():
         pass
     return {"used_percent": 0}
 
-
 def get_ram_percent():
     try:
         return int(psutil.virtual_memory().percent)
     except:
         return 0
-
 
 # ==========================================================
 # Routes
@@ -158,7 +138,6 @@ def dashboard():
         users=active_user_count()
     )
 
-
 @app.route("/api/stats")
 @requires_auth
 def stats():
@@ -168,7 +147,6 @@ def stats():
         "ram": get_ram_percent(),
         "users": active_user_count()
     })
-
 
 # ==========================================================
 # Password Change
@@ -189,7 +167,6 @@ def change_password():
     save_auth(auth)
     return jsonify(ok=True)
 
-
 # ==========================================================
 # Screen Controls
 # ==========================================================
@@ -201,7 +178,6 @@ def rotate():
     write_control(c)
     return jsonify(ok=True)
 
-
 @app.route("/api/invert", methods=["POST"])
 @requires_auth
 def invert():
@@ -210,80 +186,43 @@ def invert():
     write_control(c)
     return jsonify(ok=True)
 
-
-# ==========================================================
-# Reboot System
-# ==========================================================
 @app.route("/api/reboot", methods=["POST"])
 @requires_auth
 def reboot():
     try:
-        # More reliable than plain reboot
-        subprocess.Popen(["/usr/bin/sudo", "/sbin/shutdown", "-r", "now"])
+        subprocess.Popen(["sudo", "/sbin/shutdown", "-r", "now"])
         return jsonify(ok=True)
     except Exception as e:
         print("Reboot error:", e)
         return jsonify(ok=False, error=str(e)), 500
 
-
 # ==========================================================
-# Network
+# CLI inside Web GUI (sudo where allowed)
 # ==========================================================
-@app.route("/api/scan_networks")
+@app.route("/api/cli", methods=["POST"])
 @requires_auth
-def scan_networks():
+def cli():
+    data = request.json or {}
+    cmd = data.get("command", "").strip()
+    if not cmd:
+        return jsonify(ok=False, error="No command provided")
+
+    # Safe whitelist
+    ALLOWED_CMDS = ["nmcli", "ifconfig", "ip", "ping", "ls", "cat", "shutdown"]
+    base_cmd = cmd.split()[0]
+    if base_cmd not in ALLOWED_CMDS:
+        return jsonify(ok=False, error="Command not allowed")
+
+    # Prepend sudo for privileged commands
+    if base_cmd in ["nmcli", "ifconfig", "ip", "shutdown"]:
+        cmd = "sudo " + cmd
+
     try:
-        result = subprocess.run(
-            ["/usr/bin/nmcli", "-t", "-f", "SSID,SECURITY,SIGNAL", "dev", "wifi"],
-            capture_output=True,
-            text=True,
-            check=True
-        )
-
-        networks = []
-
-        for line in result.stdout.strip().split("\n"):
-            if not line.strip():
-                continue
-
-            parts = line.split(":")
-            if len(parts) != 3:
-                continue
-
-            ssid, security, signal = parts
-
-            networks.append({
-                "ssid": ssid.strip(),
-                "secure": bool(security.strip()),
-                "signal": int(signal) if signal.isdigit() else 0
-            })
-
-        return jsonify(networks)
-
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=15)
+        output = result.stdout.strip() or result.stderr.strip()
+        return jsonify(ok=True, output=output)
     except Exception as e:
-        print("Scan error:", e)
-        return jsonify([])
-
-
-@app.route("/api/switch_network", methods=["POST"])
-@requires_auth
-def switch_network():
-    data = request.json
-    ssid = data.get("ssid", "").strip()
-    password = data.get("password", "").strip()
-
-    if not ssid:
-        return jsonify(ok=False, error="SSID cannot be empty"), 400
-
-    try:
-        subprocess.run(
-            ["/usr/bin/nmcli", "dev", "wifi", "connect", ssid, "password", password],
-            check=True
-        )
-        return jsonify(ok=True, message=f"Connected to {ssid}")
-    except subprocess.CalledProcessError:
-        return jsonify(ok=False, error="Connection failed"), 500
-
+        return jsonify(ok=False, error=str(e))
 
 # ==========================================================
 # Run
