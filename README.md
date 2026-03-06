@@ -80,6 +80,16 @@ systemctl status epaper-status.service
 
 should be no errors
 
+crontab -e
+
+remove:
+
+@reboot python3 /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/mem_display.py
+
+ctrl+O
+
+ctrl+X
+
 🔁 Reboot test (important)
 sudo reboot
 
