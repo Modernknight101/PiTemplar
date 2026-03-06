@@ -4,7 +4,7 @@
 
 # PiTemplar ePaper Auto-Start Setup
 
-# Automates crontab + systemd service creation
+# Automates systemd service creation
 
 # -------------------------------------------------------
 
@@ -18,16 +18,7 @@ echo "1️⃣ Making mem_display.py executable..."
 chmod +x "$SCRIPT"
 
 echo "----------------------------------------"
-echo "2️⃣ Adding @reboot cron job..."
-
-CRON_ENTRY="@reboot python3 $SCRIPT"
-
-(crontab -u $USER -l 2>/dev/null | grep -v "$SCRIPT"; echo "$CRON_ENTRY") | crontab -u $USER -
-
-echo "Cron job installed."
-
-echo "----------------------------------------"
-echo "3️⃣ Creating systemd service..."
+echo "2️⃣ Creating systemd service..."
 
 sudo tee "$SERVICE" > /dev/null <<EOF
 [Unit]
@@ -50,23 +41,23 @@ EOF
 echo "Service file created."
 
 echo "----------------------------------------"
-echo "4️⃣ Reloading systemd..."
+echo "3️⃣ Reloading systemd..."
 
 sudo systemctl daemon-reexec
 sudo systemctl daemon-reload
 
 echo "----------------------------------------"
-echo "5️⃣ Enabling service at boot..."
+echo "4️⃣ Enabling service at boot..."
 
 sudo systemctl enable epaper-status.service
 
 echo "----------------------------------------"
-echo "6️⃣ Starting service..."
+echo "5️⃣ Starting service..."
 
 sudo systemctl start epaper-status.service
 
 echo "----------------------------------------"
-echo "7️⃣ Checking service status..."
+echo "6️⃣ Checking service status..."
 
 systemctl status epaper-status.service --no-pager
 
