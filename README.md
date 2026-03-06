@@ -234,16 +234,6 @@ chmod +x setup_web_gui.sh
 
 sudo ./setup_web_gui.sh
 
-#Now modify how it runs the console on web GUI to allow hopping networks
-
-sudo visudo
-
-#make sure it's present at the bottom of the file
-
-pitemplar ALL=(ALL) NOPASSWD: /sbin/reboot
-
-pitemplar ALL=(ALL) NOPASSWD: /usr/bin/nmcli, /sbin/shutdown, /usr/bin/ip, /usr/sbin/ifconfig
-
 After this the Web GUI should be up. Login with <IP>:8080 and check out the features!
 
 #####################################################Useful commands####################################################################
