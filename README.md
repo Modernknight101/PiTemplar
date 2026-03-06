@@ -42,6 +42,8 @@ Install dependencies first:
 
 sudo apt update
 
+sudo apt upgrade
+
 sudo apt install -y python3-pip python3-pil python3-numpy git
 
 sudo apt install python3-psutil
