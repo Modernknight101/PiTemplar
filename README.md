@@ -82,7 +82,7 @@ should be no errors
 
 crontab -e
 
-remove:
+remove (if present):
 
 @reboot python3 /home/pitemplar/e-Paper/RaspberryPi_JetsonNano/python/PiTemplar/mem_display.py
 
