@@ -38,9 +38,9 @@ PHRASES = [
     ("I am PiTemplar sire!", "Data Bank is my sacred duty!"),
     ("Guard thy bits, my liege!", "The vault stands ready!"),
     ("Thy server awakens!", "8080 awaits thy command!"),
-    ("Sire! V1.2.2 stands firm!", "No packets shall falter!"),
+    ("Sire! V1.2.3 stands firm!", "No packets shall falter!"),
     ("I watch thy disks, sire!", "Not a byte goes astray!"),
-    ("Rest easy, my liege!", "PiTemplar Version 1.2.2")
+    ("Rest easy, my liege!", "PiTemplar Version 1.2.3")
 ]
 
 # ---------------- STATE ----------------
