@@ -55,23 +55,21 @@ def read_xp():
         with open(XP_FILE, "r") as f:
             data = json.load(f)
 
-        if "level" not in data or "xp" not in data or "xp_to_next" not in data:
+        if not all(k in data for k in ("level", "xp", "xp_to_next")):
             raise ValueError
 
         if data["xp_to_next"] <= 0:
             data["xp_to_next"] = 10
 
-        if data["xp"] >= data["xp_to_next"]:
-            data["xp"] = 0
-
         return data
-
     except:
         return {"level": 1, "xp": 0, "xp_to_next": 10}
+
 
 def write_xp(data):
     with open(XP_FILE, "w") as f:
         json.dump(data, f)
+
 
 def add_xp(amount=2):
     data = read_xp()
@@ -105,6 +103,7 @@ def get_ip(ifname='wlan0'):
     except:
         return "No IP"
 
+
 def get_cpu_temp():
     try:
         with open("/sys/class/thermal/thermal_zone0/temp") as f:
@@ -112,9 +111,11 @@ def get_cpu_temp():
     except:
         return "N/A"
 
+
 def get_disk_usage(path):
     d = shutil.disk_usage(path)
     return int((d.used / d.total) * 100)
+
 
 def get_ssid():
     try:
@@ -123,12 +124,14 @@ def get_ssid():
     except:
         return "No WiFi"
 
+
 def read_control():
     try:
         with open(CONTROL_FILE, "r") as f:
             return json.load(f)
     except:
         return {"flip": False, "invert": False, "refresh": False}
+
 
 def write_control(data):
     with open(CONTROL_FILE, "w") as f:
@@ -166,9 +169,11 @@ except:
 graphics = []
 for i in range(GRAPHIC_COUNT):
     filename = f"{GRAPHIC_PREFIX}{i}.png"
-    graphics.append(Image.open(filename).convert("1") if os.path.exists(filename) else None)
+    graphics.append(
+        Image.open(filename).convert("1") if os.path.exists(filename) else None
+    )
 
-print("PiTemplar XP System Corrected Build Active")
+print("⚔️ PiTemplar Final Build Active")
 
 # ---------------- MAIN LOOP ----------------
 while True:
@@ -216,6 +221,7 @@ while True:
     xp = xp_data["xp"]
     xp_to_next = xp_data["xp_to_next"]
 
+    # -------- IMAGE --------
     image = Image.new('1', (epd.height, epd.width), 255)
     draw = ImageDraw.Draw(image)
 
@@ -223,8 +229,23 @@ while True:
     title_text = "PiTemplar"
     draw.text((5, 5), title_text, font=title_font, fill=0)
     title_width = draw.textlength(title_text, font=title_font)
-    draw.text((5 + title_width + 5, 10), f"Lv:{level}", font=font, fill=0)
 
+    level_text = f"Lv:{level}"
+    level_x = 5 + title_width + 5
+    draw.text((level_x, 10), level_text, font=font, fill=0)
+
+    # -------- XP BAR (under Lv) --------
+    bar_x = int(level_x)
+    bar_y = 22
+    bar_width = 50
+    bar_height = 5
+
+    progress = int((xp / xp_to_next) * bar_width)
+
+    draw.rectangle((bar_x, bar_y, bar_x + bar_width, bar_y + bar_height), outline=0)
+    draw.rectangle((bar_x, bar_y, bar_x + progress, bar_y + bar_height), fill=0)
+
+    # -------- DIVIDER --------
     draw.line((5, 30, epd.height - 5, 30), fill=0)
 
     # -------- PHRASES --------
@@ -238,23 +259,8 @@ while True:
     draw.text((5, 48), line2, font=font, fill=0)
 
     # -------- SYSTEM INFO --------
-    draw.text((5, 60), "_____________________________", font=font, fill=0)
     draw.text((5, 75), f"Disk Used: {used_percent}%", font=font, fill=0)
     draw.text((5, 90), f"WiFi: {ssid}", font=font, fill=0)
-
-    # -------- IP + XP BAR --------
-    short_ip = ip_addr if len(ip_addr) < 13 else ip_addr[:12]
-    draw.text((5, 105), f"IP: {short_ip}", font=font, fill=0)
-
-    bar_x = 105
-    bar_y = 107
-    bar_width = epd.height - 110
-    bar_height = 5
-
-    progress = int((xp / xp_to_next) * bar_width)
-
-    draw.rectangle((bar_x, bar_y, bar_x + bar_width, bar_y + bar_height), outline=0)
-    draw.rectangle((bar_x, bar_y, bar_x + progress, bar_y + bar_height), fill=0)
 
     # -------- CPU --------
     draw.text((5, 118), f"CPU: {cpu_temp}", font=font, fill=0)
@@ -263,8 +269,11 @@ while True:
     current_graphic = graphics[GRAPHIC_INDEX]
     if current_graphic:
         x = epd.height - current_graphic.width - 5
-        y = 5
-        image.paste(current_graphic, (x, y))
+        image.paste(current_graphic, (x, 5))
+
+    # -------- IP (DRAW LAST - ALWAYS FULL) --------
+    ip_text = f"IP: {ip_addr}"
+    draw.text((5, 105), ip_text, font=font, fill=0)
 
     # -------- ROTATE / INVERT --------
     if ROTATED:
