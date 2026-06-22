@@ -38,9 +38,9 @@ PHRASES = [
     ("I am PiTemplar sire!", "Data Bank is my sacred duty!"),
     ("Guard thy bits, my liege!", "The vault stands ready!"),
     ("Thy server awakens!", "8080 awaits thy command!"),
-    ("Sire! V1.2.3 stands firm!", "No packets shall falter!"),
+    ("Sire! V1.2.4 stands firm!", "No packets shall falter!"),
     ("I watch thy disks, sire!", "Not a byte goes astray!"),
-    ("Rest easy, my liege!", "PiTemplar Version 1.2.3")
+    ("Rest easy, my liege!", "PiTemplar Version 1.2.4")
 ]
 
 # ---------------- STATE ----------------
@@ -90,16 +90,30 @@ def add_xp(amount=2):
     return data, leveled_up
 
 # ---------------- SYSTEM ----------------
-def get_ip(ifname='wlan0'):
+def get_primary_ip():
+    # Try common WiFi interfaces first
+    for ifname in ["wlan0", "ap0"]:
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            ip = socket.inet_ntoa(
+                fcntl.ioctl(
+                    s.fileno(),
+                    0x8915,
+                    struct.pack('256s', ifname[:15].encode('utf-8'))
+                )[20:24]
+            )
+            if ip and not ip.startswith("0."):
+                return ip
+        except:
+            pass
+
+    # Fallback: get IP used for outbound routing (best for AP mode)
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        return socket.inet_ntoa(
-            fcntl.ioctl(
-                s.fileno(),
-                0x8915,
-                struct.pack('256s', ifname[:15].encode('utf-8'))
-            )[20:24]
-        )
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
     except:
         return "No IP"
 
@@ -213,7 +227,7 @@ while True:
 
     used_percent = get_disk_usage(DISK_PATH)
     ssid = get_ssid()
-    ip_addr = get_ip("wlan0")
+    ip_addr = get_primary_ip()
     cpu_temp = get_cpu_temp()
 
     xp_data = read_xp()
