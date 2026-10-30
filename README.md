@@ -169,7 +169,27 @@ After this the Web GUI should be up. Login with <IP>:8080 and check out the feat
 
 #nmcli dev wifi -help
 
-#Theese will display currently known connections, currently available networks, and using the -help command, you can see the syntax to add or remove a wifi connection.
+#These will display currently known connections, currently available networks, and using the -help command, you can see the syntax to add or remove a wifi connection.
+
+###############################AP Mode: Allows for PiTemplar to connect when no Network is available###################################
+
+#SSH into the PiTemplar and input these commands
+
+ sudo nmcli connection add \
+  type wifi \
+  ifname wlan0 \
+  con-name fallback-ap \
+  autoconnect no \
+  ssid PiTemplarTest
+Connection 'test-ap' (67438877-758d-4eda-8ad0-28021185447c) successfully added.
+pitemplar@PiTemplar:~ $ sudo nmcli connection modify test-ap \
+  802-11-wireless.mode ap \
+  ipv4.method shared \
+  ipv6.method ignore
+  sudo nmcli connection modify fallback-ap wifi-sec.key-mgmt wpa-psk
+  sudo nmcli connection modify fallback-ap wifi-sec.psk "PiTemplar"
+
+#AP mode must be manually enabled, for now. Your Screen will display no SSID and an IP will be displayed. AP mode must be enabled manually for now. 
 
 🎩 Thank You ♥
 💖 Support Me
